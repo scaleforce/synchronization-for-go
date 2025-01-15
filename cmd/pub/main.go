@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/azure/servicebus"
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event/xnms"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
 	"github.com/spf13/viper"
@@ -73,13 +74,13 @@ func main() {
 		case <-ctx.Done():
 			done = true
 		case <-tick:
-			message := &xnms.DeviceEvent{
-				Data: &xnms.DeviceData{
+			message := xnms.NewDeviceEvent(event.Version1, event.OperationAddOrSet, time.Now().UTC().Format(time.RFC3339), event.TenantGroupNameExcitel,
+				&xnms.DeviceData{
 					Code:         "123",
 					SerialNumber: "123",
 					TenantName:   "delhi",
 				},
-			}
+			)
 
 			if err := publisher.Publish(ctx, message); err != nil {
 				log.Panic(err)

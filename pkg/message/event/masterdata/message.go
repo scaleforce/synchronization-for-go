@@ -1,6 +1,7 @@
 package masterdata
 
 import (
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
 )
@@ -26,6 +27,23 @@ type CityEvent struct {
 	Data *CityData `json:"Data"`
 }
 
+func NewCityEvent(version, operation, timestamp, tenantGroupName string, data *CityData) *CityEvent {
+	return &CityEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorCity),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
+}
+
 func (message *CityEvent) Discriminator() pubsub.Discriminator {
 	return DiscriminatorCity
 }
@@ -39,6 +57,23 @@ type CircleData struct {
 type CircleEvent struct {
 	event.TenantGroupEvent
 	Data *CircleData `json:"Data"`
+}
+
+func NewCircleEvent(version, operation, timestamp, tenantGroupName string, data *CircleData) *CircleEvent {
+	return &CircleEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorCircle),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
 }
 
 func (message *CircleEvent) Discriminator() pubsub.Discriminator {
@@ -56,6 +91,23 @@ type ZoneData struct {
 type ZoneEvent struct {
 	event.TenantGroupEvent
 	Data *ZoneData `json:"Data"`
+}
+
+func NewZoneEvent(version, operation, timestamp, tenantGroupName string, data *ZoneData) *ZoneEvent {
+	return &ZoneEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorZone),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
 }
 
 func (message *ZoneEvent) Discriminator() pubsub.Discriminator {

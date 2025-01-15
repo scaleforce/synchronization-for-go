@@ -1,6 +1,7 @@
 package partner
 
 import (
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
 )
@@ -34,6 +35,23 @@ type PartnerGroupData struct {
 type PartnerGroupEvent struct {
 	event.TenantGroupEvent
 	Data *PartnerGroupData `json:"Data"`
+}
+
+func NewPartnerGroupEvent(version, operation, timestamp, tenantGroupName string, data *PartnerGroupData) *PartnerGroupEvent {
+	return &PartnerGroupEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorPartnerGroup),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
 }
 
 func (message *PartnerGroupEvent) Discriminator() pubsub.Discriminator {
@@ -161,6 +179,23 @@ type PartnerData struct {
 type PartnerEvent struct {
 	event.TenantGroupEvent
 	Data *PartnerData `json:"Data"`
+}
+
+func NewPartnerEvent(version, operation, timestamp, tenantGroupName string, data *PartnerData) *PartnerEvent {
+	return &PartnerEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorPartner),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
 }
 
 func (message *PartnerEvent) Discriminator() pubsub.Discriminator {

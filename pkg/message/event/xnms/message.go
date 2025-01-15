@@ -1,6 +1,7 @@
 package xnms
 
 import (
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
 )
@@ -27,6 +28,23 @@ type DeviceData struct {
 type DeviceEvent struct {
 	event.TenantGroupEvent
 	Data *DeviceData `json:"Data"`
+}
+
+func NewDeviceEvent(version, operation, timestamp, tenantGroupName string, data *DeviceData) *DeviceEvent {
+	return &DeviceEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorDevice),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
 }
 
 func (message *DeviceEvent) Discriminator() pubsub.Discriminator {

@@ -1,6 +1,7 @@
 package hr
 
 import (
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
 )
@@ -93,6 +94,23 @@ type EmployeeEvent struct {
 	Data *EmployeeData `json:"Data"`
 }
 
+func NewEmployeeEvent(version, operation, timestamp, tenantGroupName string, data *EmployeeData) *EmployeeEvent {
+	return &EmployeeEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorEmployee),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
+}
+
 func (message *EmployeeEvent) Discriminator() pubsub.Discriminator {
 	return DiscriminatorEmployee
 }
@@ -109,6 +127,23 @@ type PositionEvent struct {
 	Data *PositionData `json:"Data"`
 }
 
+func NewPositionEvent(version, operation, timestamp, tenantGroupName string, data *PositionData) *PositionEvent {
+	return &PositionEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorPosition),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
+}
+
 func (message *PositionEvent) Discriminator() pubsub.Discriminator {
 	return DiscriminatorPosition
 }
@@ -123,6 +158,23 @@ type RoleData struct {
 type RoleEvent struct {
 	event.TenantGroupEvent
 	Data *RoleData `json:"Data"`
+}
+
+func NewRoleEvent(version, operation, timestamp, tenantGroupName string, data *RoleData) *RoleEvent {
+	return &RoleEvent{
+		TenantGroupEvent: event.TenantGroupEvent{
+			Event: event.Event{
+				Message: message.Message{
+					Type: string(DiscriminatorRole),
+				},
+				Version:   version,
+				Operation: operation,
+				Timestamp: timestamp,
+			},
+			TenantGroupName: tenantGroupName,
+		},
+		Data: data,
+	}
 }
 
 func (message *RoleEvent) Discriminator() pubsub.Discriminator {
