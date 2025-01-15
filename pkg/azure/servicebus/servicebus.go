@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
-	"github.com/spf13/viper"
 )
 
 type PublisherOptions struct{}
@@ -38,7 +37,8 @@ func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message)
 }
 
 type SubscriberOptions struct {
-	Interval time.Duration
+	Interval      time.Duration
+	MessagesLimit int
 }
 
 type Subscriber struct {
@@ -57,9 +57,16 @@ func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatche
 
 func (subscriber *Subscriber) Run(ctx context.Context) error {
 	interval := 1 * time.Minute
+	messagesLimit := 1
 
-	if subscriber.options != nil && subscriber.options.Interval > 0 {
-		interval = subscriber.options.Interval
+	if subscriber.options != nil {
+		if subscriber.options.Interval > 0 {
+			interval = subscriber.options.Interval
+		}
+
+		if subscriber.options.MessagesLimit > 0 {
+			messagesLimit = subscriber.options.MessagesLimit
+		}
 	}
 
 	tick := time.Tick(interval)
@@ -69,7 +76,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-tick:
-			serviceBusReceivedMessages, err := subscriber.receiver.ReceiveMessages(ctx, viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"), nil)
+			serviceBusReceivedMessages, err := subscriber.receiver.ReceiveMessages(ctx, messagesLimit, nil)
 
 			if err != nil {
 				return err

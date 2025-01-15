@@ -30,8 +30,6 @@ func init() {
 	viper.SetEnvPrefix("sync")
 	viper.AutomaticEnv()
 
-	viper.SetDefault("AZURE_SERVICEBUS_MESSAGES_LIMIT", 1)
-
 	if err := viper.ReadInConfig(); err != nil {
 		log.Panic(err)
 	}

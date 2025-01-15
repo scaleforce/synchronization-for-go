@@ -19,8 +19,9 @@ This repo contains:
 - Examples
     - Publisher app that sends messages to Azure ServiceBus topic in cmd/pub
     - Subscriber app that receives messages from Azure ServiceBus subscription and prints them in the log in cmd/sub
+    - Handlers to process some of the important messages in internal/handler, by dumping them to the console
 
-**The reusable components can be imported into the publisher/subscriber apps and used "as is", or can be used as examples for custom implementation.**
+**The reusable components can be imported into the publisher/subscriber app and used "as is", or they can be used as examples if custom implementation is required.**
 
 Useful documentation about Azure ServiceBus and Azure SDK for Go:
 
@@ -89,3 +90,6 @@ Environment variables relevant to the subscriber apps
 | AZURE_SERVICEBUS_SUBSCRIPTION | | | Azure ServiceBus subscription. |
 | AZURE_SERVICEBUS_INTERVAL | 1 minute | Yes | Time interval to pull messages from the subscription. |
 | AZURE_SERVICEBUS_MESSAGES_LIMIT | 1 | Yes | Maximum number of messages to pull from the subscription. |
+
+> [!IMPORTANT]
+> AZURE_SERVICEBUS_INTERVAL and AZURE_SERVICEBUS_MESSAGES_LIMIT environment variables are the means of tuning the performance of subscriber apps.

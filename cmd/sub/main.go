@@ -41,7 +41,7 @@ func init() {
 	viper.AutomaticEnv()
 
 	viper.SetDefault("AZURE_SERVICEBUS_INTERVAL", 10*time.Second)
-	viper.SetDefault("AZURE_SERVICEBUS_MESSAGES_LIMIT", 1)
+	viper.SetDefault("AZURE_SERVICEBUS_MESSAGES_LIMIT", 10)
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Panic(err)
@@ -95,7 +95,8 @@ func main() {
 	defer receiver.Close(ctx)
 
 	subscriberOptions := &servicebus.SubscriberOptions{
-		Interval: viper.GetDuration("AZURE_SERVICEBUS_INTERVAL"),
+		Interval:      viper.GetDuration("AZURE_SERVICEBUS_INTERVAL"),
+		MessagesLimit: viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
 	}
 
 	subscriber := servicebus.NewSubscriber(receiver, dispatcher, subscriberOptions)
