@@ -16,6 +16,16 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	TenantGroupNameExcitel string = "excitel"
+)
+
+const (
+	TenantNameDelhi     string = "delhi"
+	TenantNameHyderabad string = "hyderabad"
+	TenantNameMumbai    string = "mumbai"
+)
+
 var (
 	credential *azidentity.DefaultAzureCredential
 	client     *azservicebus.Client
@@ -74,11 +84,11 @@ func main() {
 		case <-ctx.Done():
 			done = true
 		case <-tick:
-			message := xnms.NewDeviceEvent(event.Version1, event.OperationAddOrSet, time.Now().UTC().Format(time.RFC3339), event.TenantGroupNameExcitel,
+			message := xnms.NewDeviceEvent(event.Version1, event.OperationAddOrSet, time.Now().UTC().Format(time.RFC3339), TenantGroupNameExcitel,
 				&xnms.DeviceData{
 					Code:         "123",
 					SerialNumber: "123",
-					TenantName:   "delhi",
+					TenantName:   TenantNameDelhi,
 				},
 			)
 

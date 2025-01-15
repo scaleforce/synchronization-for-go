@@ -21,20 +21,10 @@ type Event struct {
 	Timestamp string `json:"Timestamp"`
 }
 
-const (
-	TenantGroupNameExcitel string = "excitel"
-)
-
 type TenantGroupEvent struct {
 	Event
 	TenantGroupName string `json:"TenantGroupName"`
 }
-
-const (
-	TenantNameDelhi     string = "delhi"
-	TenantNameHyderabad string = "hyderabad"
-	TenantNameMumbai    string = "mumbai"
-)
 
 type TenantEvent struct {
 	TenantGroupEvent
