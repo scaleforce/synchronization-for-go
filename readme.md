@@ -2,7 +2,23 @@
 
 ### Overview
 
-All systems at Excitel use the same topology:
+This repo contains:
+
+- Reusable components
+    - Models for some of the important messages used at Excitel in `pkg/message`
+    - Reusable abstractions in `pkg/pubsub` to decouple the publisher/subscriber apps from Azure Service Bus
+    - Implementation of the abstractions from `pkg/pubsub` using Azure Service Bus in `pkg/azure/servicebus`
+- Examples
+    - Publisher app that sends messages to Azure Service Bus topic in `cmd/pub`
+    - Subscriber app that receives messages from Azure Service Bus subscription and prints them to the log (console) in `cmd/sub`
+    - Handlers to process some of the important messages in `internal/handler`, by printing them to the log (console)
+
+**You can import the reusable components into the publisher/subscriber app and use them "as is", or use them as examples if you prefer to create a custom implementation.**
+
+> [!IMPORTANT]
+> Implementing synchronization with a specific Excitel system means implementing handlers for some of the messages (usually events) published by that system.
+
+Synchronization infrastructure between all systems at Excitel use the same topology:
 
 ```mermaid
 graph LR
@@ -13,20 +29,7 @@ graph LR
 
 *The arrows represent the flow of messages*
 
-This repo contains:
-
-- Reusable components
-    - Models for some of the important messages used at Excitel in `pkg/message`
-    - Reusable abstractions in `pkg/pubsub` to decouple the publisher/subscriber apps from Azure Service Bus
-    - Implementation of the abstractions from `pkg/pubsub` using Azure Service Bus in `pkg/azure/servicebus`
-- Examples
-    - Publisher app that sends messages to Azure Service Bus topic in `cmd/pub`
-    - Subscriber app that receives messages from Azure Service Bus subscription and prints them in the log in `cmd/sub`
-    - Handlers to process some of the important messages in `internal/handler`, by dumping them to the console
-
-**The reusable components can be imported into the publisher/subscriber app and used "as is", or they can be used as examples if custom implementation is required.**
-
-Useful documentation about Azure Service Bus and Azure SDK for Go:
+Useful documentation about Azure Service Bus and Azure SDK for Go on which this repo is based:
 
 [Azure Service Bus documentation](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview)
 
@@ -34,7 +37,7 @@ Useful documentation about Azure Service Bus and Azure SDK for Go:
 
 ### Quick Start
 
-#### Pub 
+#### Pub App
 
 Example app that sends events to Azure Service Bus topic.
 
@@ -54,7 +57,7 @@ AZURE_SERVICEBUS_TOPIC=<Add the topic here>
 go run cmd/pub/main.go
 ```
 
-#### Sub
+#### Sub App
 
 Example app that receives events from Azure Service Bus subscription.
 
