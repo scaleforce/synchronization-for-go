@@ -5,13 +5,13 @@
 This repo contains:
 
 - Reusable components
-    - Models for some of the important messages used at Excitel in `pkg/message`
+    - Models for some of the main messages used at Excitel in `pkg/message`
     - Reusable abstractions in `pkg/pubsub` to decouple the publisher/subscriber apps from Azure Service Bus
     - Implementation of the abstractions from `pkg/pubsub` using Azure Service Bus in `pkg/azure/servicebus`
 - Examples
     - Publisher app that sends messages to Azure Service Bus topic in `cmd/pub`
     - Subscriber app that receives messages from Azure Service Bus subscription and prints them to the log (console) in `cmd/sub`
-    - Handlers to process some of the important messages in `internal/handler`, by printing them to the log (console)
+    - Handlers to process some of the main messages in `internal/handler`, by printing them to the log (console)
 
 **You can import the reusable components into the publisher/subscriber app and use them "as is", or use them as examples if you prefer to create a custom implementation.**
 
