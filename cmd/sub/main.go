@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
@@ -99,9 +100,27 @@ func main() {
 		MessagesLimit: viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
 	}
 
-	subscriber := servicebus.NewSubscriber(receiver, dispatcher, subscriberOptions)
+	subscriber := servicebus.NewSubscriber(receiver, dispatcher, unmarshalDiscriminator, unmarshalMessage, subscriberOptions)
 
 	if err := subscriber.Run(ctx); err != nil {
 		log.Panic(err)
 	}
+}
+
+func unmarshalDiscriminator(data []byte, discriminator *pubsub.Discriminator) error {
+	partialMessage := &struct {
+		Type string `json:"Type"`
+	}{}
+
+	if err := json.Unmarshal(data, &partialMessage); err != nil {
+		return err
+	}
+
+	discriminator = (*pubsub.Discriminator)(&partialMessage.Type)
+
+	return nil
+}
+
+func unmarshalMessage(data []byte, message pubsub.Message) error {
+	return json.Unmarshal(data, message)
 }

@@ -2,7 +2,6 @@ package pubsub
 
 import (
 	"context"
-	"encoding/json"
 )
 
 const (
@@ -49,22 +48,6 @@ func (dispatcher *Dispatcher) Dispatch(discriminator Discriminator) (Handler, bo
 	handler, ok := dispatcher.handlers[discriminator]
 
 	return handler, ok
-}
-
-func UnmarshalDiscriminator(data []byte) (Discriminator, error) {
-	message := &struct {
-		Discriminator string `json:"discriminator"`
-	}{}
-
-	if err := json.Unmarshal(data, &message); err != nil {
-		return DiscriminatorEmpty, err
-	}
-
-	return Discriminator(message.Discriminator), nil
-}
-
-func UnmarshalMessage(data []byte, message Message) error {
-	return json.Unmarshal(data, message)
 }
 
 type Subscriber interface {

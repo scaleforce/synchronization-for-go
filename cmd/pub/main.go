@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
@@ -75,7 +76,7 @@ func main() {
 
 	defer sender.Close(ctx)
 
-	publisher := servicebus.NewPublisher(sender, nil)
+	publisher := servicebus.NewPublisher(sender, marshalMessage, nil)
 
 	tick := time.Tick(10 * time.Second)
 
@@ -97,4 +98,8 @@ func main() {
 			}
 		}
 	}
+}
+
+func marshalMessage(message pubsub.Message) ([]byte, error) {
+	return json.Marshal(message)
 }

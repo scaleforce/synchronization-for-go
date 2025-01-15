@@ -10,23 +10,33 @@ import (
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
 )
 
+type MarshalMessageFunc func(message pubsub.Message) ([]byte, error)
+
 type PublisherOptions struct{}
 
 type Publisher struct {
-	sender  *azservicebus.Sender
-	options *PublisherOptions
+	sender             *azservicebus.Sender
+	marshalMessageFunc MarshalMessageFunc
+	options            *PublisherOptions
 }
 
-func NewPublisher(sender *azservicebus.Sender, options *PublisherOptions) *Publisher {
+func NewPublisher(sender *azservicebus.Sender, marshalMessageFunc MarshalMessageFunc, options *PublisherOptions) *Publisher {
 	return &Publisher{
-		sender:  sender,
-		options: options,
+		sender:             sender,
+		marshalMessageFunc: marshalMessageFunc,
+		options:            options,
 	}
 }
 
 func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message) error {
+	body, err := publisher.marshalMessageFunc(message)
+
+	if err != nil {
+		return err
+	}
+
 	serviceBusMessage := &azservicebus.Message{
-		Body: []byte{},
+		Body: body,
 	}
 
 	if err := publisher.sender.SendMessage(ctx, serviceBusMessage, nil); err != nil {
@@ -36,22 +46,30 @@ func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message)
 	return nil
 }
 
+type UnmarshalDiscriminatorFunc func(body []byte, discriminator *pubsub.Discriminator) error
+
+type UnmarshalMessageFunc func(body []byte, message pubsub.Message) error
+
 type SubscriberOptions struct {
 	Interval      time.Duration
 	MessagesLimit int
 }
 
 type Subscriber struct {
-	receiver   *azservicebus.Receiver
-	dispatcher *pubsub.Dispatcher
-	options    *SubscriberOptions
+	receiver                   *azservicebus.Receiver
+	dispatcher                 *pubsub.Dispatcher
+	unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc
+	unmarshalMessageFunc       UnmarshalMessageFunc
+	options                    *SubscriberOptions
 }
 
-func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, options *SubscriberOptions) *Subscriber {
+func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc, unmarshalMessageFunc UnmarshalMessageFunc, options *SubscriberOptions) *Subscriber {
 	return &Subscriber{
-		receiver:   receiver,
-		dispatcher: dispatcher,
-		options:    options,
+		receiver:                   receiver,
+		dispatcher:                 dispatcher,
+		unmarshalDiscriminatorFunc: unmarshalDiscriminatorFunc,
+		unmarshalMessageFunc:       unmarshalMessageFunc,
+		options:                    options,
 	}
 }
 
@@ -83,9 +101,9 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 			}
 
 			for _, serviceBusReceivedMessage := range serviceBusReceivedMessages {
-				discriminator, err := pubsub.UnmarshalDiscriminator(serviceBusReceivedMessage.Body)
+				discriminator := pubsub.DiscriminatorEmpty
 
-				if err != nil {
+				if err := subscriber.unmarshalDiscriminatorFunc(serviceBusReceivedMessage.Body, &discriminator); err != nil {
 					deadLetterOptions := &azservicebus.DeadLetterOptions{
 						ErrorDescription: to.Ptr(err.Error()),
 						Reason:           to.Ptr("UnmarshalDiscriminatorError"),
@@ -105,7 +123,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 				if handler, ok := subscriber.dispatcher.Dispatch(discriminator); ok {
 					message := handler.Create()
 
-					if err := pubsub.UnmarshalMessage(serviceBusReceivedMessage.Body, message); err != nil {
+					if err := subscriber.unmarshalMessageFunc(serviceBusReceivedMessage.Body, message); err != nil {
 						deadLetterOptions := &azservicebus.DeadLetterOptions{
 							ErrorDescription: to.Ptr(err.Error()),
 							Reason:           to.Ptr("UnmarshalMessageError"),
