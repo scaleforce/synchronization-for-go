@@ -116,7 +116,7 @@ func unmarshalDiscriminator(data []byte, discriminator *pubsub.Discriminator) er
 		return err
 	}
 
-	discriminator = (*pubsub.Discriminator)(&partialMessage.Type)
+	*discriminator = pubsub.Discriminator(partialMessage.Type)
 
 	return nil
 }
