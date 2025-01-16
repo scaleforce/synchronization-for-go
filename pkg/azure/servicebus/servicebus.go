@@ -7,8 +7,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsublog"
+	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
+	"github.com/scaleforce/synchronization-for-go/pkg/pubsublog"
 )
 
 type MarshalMessageFunc func(message pubsub.Message) ([]byte, error)

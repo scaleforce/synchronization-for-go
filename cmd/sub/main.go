@@ -10,13 +10,13 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
-	"github.com/scaleforce/synchronization-sdk-for-go/internal/handler/event/hr"
-	"github.com/scaleforce/synchronization-sdk-for-go/internal/handler/event/masterdata"
-	"github.com/scaleforce/synchronization-sdk-for-go/internal/handler/event/partner"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/azure/servicebus"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsublog"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/stdpubsublog"
+	"github.com/scaleforce/synchronization-for-go/internal/handler/event/hr"
+	"github.com/scaleforce/synchronization-for-go/internal/handler/event/masterdata"
+	"github.com/scaleforce/synchronization-for-go/internal/handler/event/partner"
+	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
+	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
+	"github.com/scaleforce/synchronization-for-go/pkg/pubsublog"
+	"github.com/scaleforce/synchronization-for-go/pkg/stdpubsublog"
 	"github.com/spf13/viper"
 )
 

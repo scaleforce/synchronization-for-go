@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message"
+	"github.com/scaleforce/synchronization-for-go/pkg/message"
 )
 
 const (

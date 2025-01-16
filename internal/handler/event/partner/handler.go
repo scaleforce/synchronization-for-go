@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	event "github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event/partner"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
+	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/partner"
+	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
 var ErrInvalidDiscriminator = errors.New("invalid discriminator")

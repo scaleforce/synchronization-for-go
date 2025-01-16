@@ -1,4 +1,4 @@
-module github.com/scaleforce/synchronization-sdk-for-go
+module github.com/scaleforce/synchronization-for-go
 
 go 1.23.4
 

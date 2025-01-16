@@ -1,9 +1,9 @@
 package partner
 
 import (
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event"
-	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
+	"github.com/scaleforce/synchronization-for-go/pkg/message"
+	"github.com/scaleforce/synchronization-for-go/pkg/message/event"
+	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
 const (
