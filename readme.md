@@ -54,7 +54,8 @@ AZURE_SERVICEBUS_TOPIC=<Add the topic here>
 2. Run
 
 ```shell
-go run cmd/pub/main.go
+cd cmd/pub
+go run main.go
 ```
 
 #### Sub App
@@ -75,7 +76,8 @@ AZURE_SERVICEBUS_SUBSCRIPTION=<Add the subscription here>
 2. Run
 
 ```shell
-go run cmd/sub/main.go
+cd cmd/sub
+go run main.go
 ```
 
 ### Available configuration options
