@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsublog"
 )
 
 type MarshalMessageFunc func(message pubsub.Message) ([]byte, error)
@@ -17,13 +18,15 @@ type PublisherOptions struct{}
 type Publisher struct {
 	sender             *azservicebus.Sender
 	marshalMessageFunc MarshalMessageFunc
+	logger             pubsublog.Logger
 	options            *PublisherOptions
 }
 
-func NewPublisher(sender *azservicebus.Sender, marshalMessageFunc MarshalMessageFunc, options *PublisherOptions) *Publisher {
+func NewPublisher(sender *azservicebus.Sender, marshalMessageFunc MarshalMessageFunc, logger pubsublog.Logger, options *PublisherOptions) *Publisher {
 	return &Publisher{
 		sender:             sender,
 		marshalMessageFunc: marshalMessageFunc,
+		logger:             logger,
 		options:            options,
 	}
 }
@@ -60,15 +63,17 @@ type Subscriber struct {
 	dispatcher                 *pubsub.Dispatcher
 	unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc
 	unmarshalMessageFunc       UnmarshalMessageFunc
+	logger                     pubsublog.Logger
 	options                    *SubscriberOptions
 }
 
-func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc, unmarshalMessageFunc UnmarshalMessageFunc, options *SubscriberOptions) *Subscriber {
+func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc, unmarshalMessageFunc UnmarshalMessageFunc, logger pubsublog.Logger, options *SubscriberOptions) *Subscriber {
 	return &Subscriber{
 		receiver:                   receiver,
 		dispatcher:                 dispatcher,
 		unmarshalDiscriminatorFunc: unmarshalDiscriminatorFunc,
 		unmarshalMessageFunc:       unmarshalMessageFunc,
+		logger:                     logger,
 		options:                    options,
 	}
 }
@@ -113,6 +118,8 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 						var serviceBusErr *azservicebus.Error
 
 						if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
+							subscriber.logger.Infof("Discriminator: %s. Message lock lost.", discriminator)
+
 							continue
 						}
 
@@ -133,6 +140,8 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							var serviceBusErr *azservicebus.Error
 
 							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
+								subscriber.logger.Infof("Discriminator: %s. Message lock lost.", discriminator)
+
 								continue
 							}
 
@@ -145,18 +154,24 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							var serviceBusErr *azservicebus.Error
 
 							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
+								subscriber.logger.Infof("Discriminator: %s. Message lock lost.", discriminator)
+
 								continue
 							}
 
 							return err
 						}
 					}
+				} else {
+					subscriber.logger.Warnf("Discriminator: %s. No message handler found.", discriminator)
 				}
 
 				if err := subscriber.receiver.CompleteMessage(ctx, serviceBusReceivedMessage, nil); err != nil {
 					var serviceBusErr *azservicebus.Error
 
 					if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
+						subscriber.logger.Infof("Discriminator: %s. Message lock lost.", discriminator)
+
 						continue
 					}
 

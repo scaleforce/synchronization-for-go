@@ -6,7 +6,7 @@ This repo contains:
 
 - Reusable components
     - Models for some of the main messages used at Excitel in `pkg/message`
-    - Reusable abstractions in `pkg/pubsub` to decouple the publisher/subscriber apps from Azure Service Bus
+    - Reusable abstractions in `pkg/pubsub` and `pkg/pubsublog` to decouple the publisher/subscriber apps from Azure Service Bus and Azure SDK for Go
     - Implementation of the abstractions from `pkg/pubsub` using Azure Service Bus in `pkg/azure/servicebus`
 - Examples
     - Publisher app that sends messages to Azure Service Bus topic in `cmd/pub`

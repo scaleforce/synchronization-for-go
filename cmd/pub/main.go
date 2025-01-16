@@ -14,6 +14,8 @@ import (
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/message/event/xnms"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsublog"
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/stdpubsublog"
 	"github.com/spf13/viper"
 )
 
@@ -31,7 +33,7 @@ var (
 	credential *azidentity.DefaultAzureCredential
 	client     *azservicebus.Client
 
-	dispatcher *pubsub.Dispatcher
+	logger pubsublog.Logger
 )
 
 func init() {
@@ -61,6 +63,8 @@ func init() {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	logger = stdpubsublog.NewLogger()
 }
 
 func main() {
@@ -76,7 +80,7 @@ func main() {
 
 	defer sender.Close(ctx)
 
-	publisher := servicebus.NewPublisher(sender, marshalMessage, nil)
+	publisher := servicebus.NewPublisher(sender, marshalMessage, logger, nil)
 
 	tick := time.Tick(10 * time.Second)
 
@@ -90,6 +94,7 @@ func main() {
 					Code:         "123",
 					SerialNumber: "123",
 					TenantName:   TenantNameDelhi,
+					Status:       xnms.StatusOnline,
 				},
 			)
 

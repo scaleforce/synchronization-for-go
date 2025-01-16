@@ -15,12 +15,16 @@ import (
 	"github.com/scaleforce/synchronization-sdk-for-go/internal/handler/event/partner"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/azure/servicebus"
 	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsub"
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/pubsublog"
+	"github.com/scaleforce/synchronization-sdk-for-go/pkg/stdpubsublog"
 	"github.com/spf13/viper"
 )
 
 var (
 	credential *azidentity.DefaultAzureCredential
 	client     *azservicebus.Client
+
+	logger pubsublog.Logger
 
 	dispatcher *pubsub.Dispatcher
 )
@@ -64,6 +68,8 @@ func init() {
 		log.Panic(err)
 	}
 
+	logger = stdpubsublog.NewLogger()
+
 	dispatcher = pubsub.NewDispatcher()
 
 	dispatcher.Register(&hr.PositionEventHandler{})
@@ -100,7 +106,7 @@ func main() {
 		MessagesLimit: viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
 	}
 
-	subscriber := servicebus.NewSubscriber(receiver, dispatcher, unmarshalDiscriminator, unmarshalMessage, subscriberOptions)
+	subscriber := servicebus.NewSubscriber(receiver, dispatcher, unmarshalDiscriminator, unmarshalMessage, logger, subscriberOptions)
 
 	if err := subscriber.Run(ctx); err != nil {
 		log.Panic(err)
