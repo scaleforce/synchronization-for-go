@@ -105,7 +105,7 @@ Environment variables relevant to the subscriber apps
 | AZURE_SERVICEBUS_NAMESPACE | | | Azure Service Bus namespace. |
 | AZURE_SERVICEBUS_TOPIC | | | Azure Service Bus topic. |
 | AZURE_SERVICEBUS_SUBSCRIPTION | | | Azure Service Bus subscription. |
-| AZURE_SERVICEBUS_INTERVAL | 1 minute | Yes | Time interval to pull messages from the subscription. |
+| AZURE_SERVICEBUS_INTERVAL | 1 minute | Yes | Time interval to pull messages from the subscription. *The intervals do not overlap, even if message processing takes longer than the interval.* |
 | AZURE_SERVICEBUS_MESSAGES_LIMIT | 1 | Yes | Maximum number of messages to pull from the subscription. |
 
 > [!IMPORTANT]
