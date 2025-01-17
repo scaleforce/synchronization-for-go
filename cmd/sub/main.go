@@ -72,16 +72,16 @@ func init() {
 
 	dispatcher = pubsub.NewDispatcher()
 
-	dispatcher.Register(&hr.PositionEventHandler{})
-	dispatcher.Register(&hr.RoleEventHandler{})
-	dispatcher.Register(&hr.EmployeeEventHandler{})
+	dispatcher.Register(hr.NewPositionEventHandler(logger))
+	dispatcher.Register(hr.NewRoleEventHandler(logger))
+	dispatcher.Register(hr.NewEmployeeEventHandler(logger))
 
-	dispatcher.Register(&masterdata.CityEventHandler{})
-	dispatcher.Register(&masterdata.CircleEventHandler{})
-	dispatcher.Register(&masterdata.ZoneEventHandler{})
+	dispatcher.Register(masterdata.NewCityEventHandler(logger))
+	dispatcher.Register(masterdata.NewCircleEventHandler(logger))
+	dispatcher.Register(masterdata.NewZoneEventHandler(logger))
 
-	dispatcher.Register(&partner.PartnerGroupEventHandler{})
-	dispatcher.Register(&partner.PartnerEventHandler{})
+	dispatcher.Register(partner.NewPartnerGroupEventHandler(logger))
+	dispatcher.Register(partner.NewPartnerEventHandler(logger))
 }
 
 func main() {
