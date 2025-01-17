@@ -1,8 +1,8 @@
 package pubsublog
 
 type Logger interface {
-	Infof(format string, args ...any)
-	Warnf(format string, args ...any)
-	Errorf(format string, args ...any)
-	Debugf(format string, args ...any)
+	Infof(msg string, args ...any)
+	Warnf(msg string, args ...any)
+	Errorf(msg string, args ...any)
+	Debugf(msg string, args ...any)
 }
