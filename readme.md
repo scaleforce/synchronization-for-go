@@ -6,7 +6,7 @@ This repo contains:
 
 - Reusable components
     - Models for some of the main messages used at Excitel in `pkg/message`
-    - Reusable abstractions in `pkg/pubsub` and `pkg/pubsublog` to decouple the publisher/subscriber apps from Azure Service Bus and Azure SDK for Go
+    - Abstractions in `pkg/pubsub` and `pkg/pubsublog` to decouple the publisher/subscriber apps from Azure Service Bus and Azure SDK for Go
     - Implementation of the abstractions from `pkg/pubsub` using Azure Service Bus in `pkg/azure/servicebus`
 - Examples
     - Publisher app that sends messages to Azure Service Bus topic in `cmd/pub`
@@ -22,9 +22,18 @@ Synchronization infrastructure between all systems at Excitel use the same topol
 
 ```mermaid
 graph LR
-    Pub[Publisher App - HR] --> ASBT[Azure Service Bus Topic for HR]
-    ASBT --> ASBS1[Azure Service Bus Subscription for Procare] --> SA1[Subscriber App - Procare]
-    ASBT --> ASBS2[Azure Service Bus Subscription for XNMS] --> SA2[Subscriber App - XNMS]
+    subgraph ASB[Azure Service Bus]
+        EMT[Employee Management Topic]
+        EMT --> PS[Procare Subscription]
+        EMT --> NSS[NetSense Subscription]
+    end
+    subgraph PA[Publisher App]
+        EM[Employee Management] --> EMT
+    end
+    subgraph SA[Subscriber Apps]
+        PS --> P[Procare]
+        NSS --> NS[NetSense]
+    end
 ```
 
 *The arrows represent the flow of messages*
