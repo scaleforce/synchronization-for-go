@@ -118,7 +118,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 						var serviceBusErr *azservicebus.Error
 
 						if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-							subscriber.logger.Warnf("Discriminator: %s. Message lock lost.", discriminator)
+							subscriber.logger.Warn("Discriminator: %s. Message lock lost.", discriminator)
 
 							continue
 						}
@@ -126,7 +126,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 						return err
 					}
 
-					subscriber.logger.Errorf("Discriminator: %s. Error: %s.", discriminator, err)
+					subscriber.logger.Error("Discriminator: %s. Error: %s.", discriminator, err)
 				}
 
 				if handler, ok := subscriber.dispatcher.Dispatch(discriminator); ok {
@@ -142,7 +142,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							var serviceBusErr *azservicebus.Error
 
 							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-								subscriber.logger.Warnf("Discriminator: %s. Message lock lost.", discriminator)
+								subscriber.logger.Warn("Discriminator: %s. Message lock lost.", discriminator)
 
 								continue
 							}
@@ -150,7 +150,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							return err
 						}
 
-						subscriber.logger.Errorf("Discriminator: %s. Error: %s.", discriminator, err)
+						subscriber.logger.Error("Discriminator: %s. Error: %s.", discriminator, err)
 					}
 
 					if err := handler.Handle(message); err != nil {
@@ -158,7 +158,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							var serviceBusErr *azservicebus.Error
 
 							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-								subscriber.logger.Warnf("Discriminator: %s. Message lock lost.", discriminator)
+								subscriber.logger.Warn("Discriminator: %s. Message lock lost.", discriminator)
 
 								continue
 							}
@@ -166,17 +166,17 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							return err
 						}
 
-						subscriber.logger.Errorf("Discriminator: %s. Error: %s.", discriminator, err)
+						subscriber.logger.Error("Discriminator: %s. Error: %s.", discriminator, err)
 					}
 				} else {
-					subscriber.logger.Infof("Discriminator: %s. No message handler found.", discriminator)
+					subscriber.logger.Info("Discriminator: %s. No message handler found.", discriminator)
 				}
 
 				if err := subscriber.receiver.CompleteMessage(ctx, serviceBusReceivedMessage, nil); err != nil {
 					var serviceBusErr *azservicebus.Error
 
 					if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-						subscriber.logger.Warnf("Discriminator: %s. Message lock lost.", discriminator)
+						subscriber.logger.Warn("Discriminator: %s. Message lock lost.", discriminator)
 
 						continue
 					}
