@@ -115,12 +115,12 @@ func main() {
 	}
 }
 
-func unmarshalDiscriminator(data []byte, discriminator *pubsub.Discriminator) error {
+func unmarshalDiscriminator(serviceBusReceivedMessage *azservicebus.ReceivedMessage, discriminator *pubsub.Discriminator) error {
 	partialMessage := &struct {
 		Type string `json:"Type"`
 	}{}
 
-	if err := json.Unmarshal(data, &partialMessage); err != nil {
+	if err := json.Unmarshal(serviceBusReceivedMessage.Body, &partialMessage); err != nil {
 		return err
 	}
 
@@ -129,6 +129,6 @@ func unmarshalDiscriminator(data []byte, discriminator *pubsub.Discriminator) er
 	return nil
 }
 
-func unmarshalMessage(data []byte, message pubsub.Message) error {
-	return json.Unmarshal(data, message)
+func unmarshalMessage(serviceBusReceivedMessage *azservicebus.ReceivedMessage, message pubsub.Message) error {
+	return json.Unmarshal(serviceBusReceivedMessage.Body, message)
 }

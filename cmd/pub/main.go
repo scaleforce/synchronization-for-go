@@ -107,6 +107,16 @@ func main() {
 	}
 }
 
-func marshalMessage(message pubsub.Message) ([]byte, error) {
-	return json.Marshal(message)
+func marshalMessage(message pubsub.Message) (*azservicebus.Message, error) {
+	body, err := json.Marshal(message)
+
+	if err != nil {
+		return nil, err
+	}
+
+	serviceBusMessage := &azservicebus.Message{
+		Body: body,
+	}
+
+	return serviceBusMessage, nil
 }

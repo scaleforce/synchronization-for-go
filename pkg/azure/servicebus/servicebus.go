@@ -11,7 +11,7 @@ import (
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
-type MarshalMessageFunc func(message pubsub.Message) ([]byte, error)
+type MarshalMessageFunc func(message pubsub.Message) (*azservicebus.Message, error)
 
 type PublisherOptions struct{}
 
@@ -32,14 +32,10 @@ func NewPublisher(sender *azservicebus.Sender, marshalMessageFunc MarshalMessage
 }
 
 func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message) error {
-	body, err := publisher.marshalMessageFunc(message)
+	serviceBusMessage, err := publisher.marshalMessageFunc(message)
 
 	if err != nil {
 		return err
-	}
-
-	serviceBusMessage := &azservicebus.Message{
-		Body: body,
 	}
 
 	if err := publisher.sender.SendMessage(ctx, serviceBusMessage, nil); err != nil {
@@ -49,9 +45,9 @@ func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message)
 	return nil
 }
 
-type UnmarshalDiscriminatorFunc func(body []byte, discriminator *pubsub.Discriminator) error
+type UnmarshalDiscriminatorFunc func(serviceBusReceivedMessage *azservicebus.ReceivedMessage, discriminator *pubsub.Discriminator) error
 
-type UnmarshalMessageFunc func(body []byte, message pubsub.Message) error
+type UnmarshalMessageFunc func(serviceBusReceivedMessage *azservicebus.ReceivedMessage, message pubsub.Message) error
 
 type SubscriberOptions struct {
 	Interval      time.Duration
@@ -108,7 +104,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 			for _, serviceBusReceivedMessage := range serviceBusReceivedMessages {
 				discriminator := pubsub.DiscriminatorEmpty
 
-				if err := subscriber.unmarshalDiscriminatorFunc(serviceBusReceivedMessage.Body, &discriminator); err != nil {
+				if err := subscriber.unmarshalDiscriminatorFunc(serviceBusReceivedMessage, &discriminator); err != nil {
 					deadLetterOptions := &azservicebus.DeadLetterOptions{
 						ErrorDescription: to.Ptr(err.Error()),
 						Reason:           to.Ptr("UnmarshalDiscriminatorError"),
@@ -132,7 +128,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 				if handler, ok := subscriber.dispatcher.Dispatch(discriminator); ok {
 					message := handler.Create()
 
-					if err := subscriber.unmarshalMessageFunc(serviceBusReceivedMessage.Body, message); err != nil {
+					if err := subscriber.unmarshalMessageFunc(serviceBusReceivedMessage, message); err != nil {
 						deadLetterOptions := &azservicebus.DeadLetterOptions{
 							ErrorDescription: to.Ptr(err.Error()),
 							Reason:           to.Ptr("UnmarshalMessageError"),
