@@ -8,8 +8,16 @@ type Logger struct {
 	sugaredLogger *zap.SugaredLogger
 }
 
-func NewLogger() *Logger {
-	logger, _ := zap.NewProduction() // zap.NewDevelopment()
+func NewDevelopmentLogger() *Logger {
+	logger, _ := zap.NewDevelopment()
+
+	return &Logger{
+		sugaredLogger: logger.Sugar(),
+	}
+}
+
+func NewProductionLogger() *Logger {
+	logger, _ := zap.NewProduction()
 
 	return &Logger{
 		sugaredLogger: logger.Sugar(),
