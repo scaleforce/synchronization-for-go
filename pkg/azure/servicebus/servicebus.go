@@ -3,12 +3,12 @@ package servicebus
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsublog"
 )
 
 type MarshalMessageFunc func(message pubsub.Message) ([]byte, error)
@@ -18,11 +18,11 @@ type PublisherOptions struct{}
 type Publisher struct {
 	sender             *azservicebus.Sender
 	marshalMessageFunc MarshalMessageFunc
-	logger             pubsublog.Logger
+	logger             *slog.Logger
 	options            *PublisherOptions
 }
 
-func NewPublisher(sender *azservicebus.Sender, marshalMessageFunc MarshalMessageFunc, logger pubsublog.Logger, options *PublisherOptions) *Publisher {
+func NewPublisher(sender *azservicebus.Sender, marshalMessageFunc MarshalMessageFunc, logger *slog.Logger, options *PublisherOptions) *Publisher {
 	return &Publisher{
 		sender:             sender,
 		marshalMessageFunc: marshalMessageFunc,
@@ -63,11 +63,11 @@ type Subscriber struct {
 	dispatcher                 *pubsub.Dispatcher
 	unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc
 	unmarshalMessageFunc       UnmarshalMessageFunc
-	logger                     pubsublog.Logger
+	logger                     *slog.Logger
 	options                    *SubscriberOptions
 }
 
-func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc, unmarshalMessageFunc UnmarshalMessageFunc, logger pubsublog.Logger, options *SubscriberOptions) *Subscriber {
+func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc, unmarshalMessageFunc UnmarshalMessageFunc, logger *slog.Logger, options *SubscriberOptions) *Subscriber {
 	return &Subscriber{
 		receiver:                   receiver,
 		dispatcher:                 dispatcher,
@@ -118,7 +118,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 						var serviceBusErr *azservicebus.Error
 
 						if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-							subscriber.logger.Warn("Discriminator: %s. Message lock lost.", discriminator)
+							subscriber.logger.Warn("message lock lost", "discriminator", discriminator)
 
 							continue
 						}
@@ -126,7 +126,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 						return err
 					}
 
-					subscriber.logger.Error("Discriminator: %s. Error: %s.", discriminator, err)
+					subscriber.logger.Error("dead letter message", "discriminator", discriminator, "error", err)
 				}
 
 				if handler, ok := subscriber.dispatcher.Dispatch(discriminator); ok {
@@ -142,7 +142,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							var serviceBusErr *azservicebus.Error
 
 							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-								subscriber.logger.Warn("Discriminator: %s. Message lock lost.", discriminator)
+								subscriber.logger.Warn("message lock lost", "discriminator", discriminator)
 
 								continue
 							}
@@ -150,7 +150,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							return err
 						}
 
-						subscriber.logger.Error("Discriminator: %s. Error: %s.", discriminator, err)
+						subscriber.logger.Error("dead letter message", "discriminator", discriminator, "error", err)
 					}
 
 					if err := handler.Handle(message); err != nil {
@@ -158,7 +158,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							var serviceBusErr *azservicebus.Error
 
 							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-								subscriber.logger.Warn("Discriminator: %s. Message lock lost.", discriminator)
+								subscriber.logger.Warn("message lock lost", "discriminator", discriminator)
 
 								continue
 							}
@@ -166,23 +166,25 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 							return err
 						}
 
-						subscriber.logger.Error("Discriminator: %s. Error: %s.", discriminator, err)
+						subscriber.logger.Error("abandon message", "discriminator", discriminator, "error", err)
 					}
 				} else {
-					subscriber.logger.Info("Discriminator: %s. No message handler found.", discriminator)
+					subscriber.logger.Info("message handler not found", "discriminator", discriminator)
 				}
 
 				if err := subscriber.receiver.CompleteMessage(ctx, serviceBusReceivedMessage, nil); err != nil {
 					var serviceBusErr *azservicebus.Error
 
 					if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-						subscriber.logger.Warn("Discriminator: %s. Message lock lost.", discriminator)
+						subscriber.logger.Warn("message lock lost", "discriminator", discriminator)
 
 						continue
 					}
 
 					return err
 				}
+
+				subscriber.logger.Info("complete message", "discriminator", discriminator)
 			}
 		}
 	}

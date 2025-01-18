@@ -3,18 +3,18 @@ package hr
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/hr"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsuberr"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsublog"
 )
 
 type PositionEventHandler struct {
-	logger pubsublog.Logger
+	logger *slog.Logger
 }
 
-func NewPositionEventHandler(logger pubsublog.Logger) *PositionEventHandler {
+func NewPositionEventHandler(logger *slog.Logger) *PositionEventHandler {
 	return &PositionEventHandler{
 		logger: logger,
 	}

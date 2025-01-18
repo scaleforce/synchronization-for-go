@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"time"
@@ -14,8 +15,6 @@ import (
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event/xnms"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsublog"
-	"github.com/scaleforce/synchronization-for-go/pkg/stdpubsublog"
 	"github.com/spf13/viper"
 )
 
@@ -30,13 +29,18 @@ const (
 )
 
 var (
+	logger *slog.Logger
+
 	credential *azidentity.DefaultAzureCredential
 	client     *azservicebus.Client
-
-	logger pubsublog.Logger
 )
 
 func init() {
+	logger = slog.Default()
+	// Use otelslog bridge to integrate with OpenTelemetry (https://pkg.go.dev/go.opentelemetry.io/otel/sdk/log)
+	// logger := slog.New(slog.NewTextHandler(nil, &slog.HandlerOptions{AddSource: true}))
+	// logger := slog.New(slog.NewJSONHandler(nil, &slog.HandlerOptions{AddSource: true}))
+
 	viper.AddConfigPath(".")
 	// viper.SetConfigFile(".env")
 	// viper.SetConfigName("config")
@@ -63,8 +67,6 @@ func init() {
 	if err != nil {
 		log.Panic(err)
 	}
-
-	logger = stdpubsublog.NewLogger()
 }
 
 func main() {

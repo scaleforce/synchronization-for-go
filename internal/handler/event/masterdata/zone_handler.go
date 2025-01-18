@@ -3,18 +3,18 @@ package masterdata
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/masterdata"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsuberr"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsublog"
 )
 
 type ZoneEventHandler struct {
-	logger pubsublog.Logger
+	logger *slog.Logger
 }
 
-func NewZoneEventHandler(logger pubsublog.Logger) *ZoneEventHandler {
+func NewZoneEventHandler(logger *slog.Logger) *ZoneEventHandler {
 	return &ZoneEventHandler{
 		logger: logger,
 	}

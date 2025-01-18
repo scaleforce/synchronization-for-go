@@ -3,18 +3,18 @@ package partner
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/partner"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsuberr"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsublog"
 )
 
 type PartnerGroupEventHandler struct {
-	logger pubsublog.Logger
+	logger *slog.Logger
 }
 
-func NewPartnerGroupEventHandler(logger pubsublog.Logger) *PartnerGroupEventHandler {
+func NewPartnerGroupEventHandler(logger *slog.Logger) *PartnerGroupEventHandler {
 	return &PartnerGroupEventHandler{
 		logger: logger,
 	}

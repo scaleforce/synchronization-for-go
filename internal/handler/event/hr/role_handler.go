@@ -3,18 +3,18 @@ package hr
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/hr"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsuberr"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsublog"
 )
 
 type RoleEventHandler struct {
-	logger pubsublog.Logger
+	logger *slog.Logger
 }
 
-func NewRoleEventHandler(logger pubsublog.Logger) *RoleEventHandler {
+func NewRoleEventHandler(logger *slog.Logger) *RoleEventHandler {
 	return &RoleEventHandler{
 		logger: logger,
 	}
