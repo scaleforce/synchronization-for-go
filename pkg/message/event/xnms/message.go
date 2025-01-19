@@ -6,8 +6,6 @@ import (
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
-// Fictitious XNMS_Device event for demonstration purposes.
-
 const (
 	DiscriminatorDevice pubsub.Discriminator = "XNMS_Device"
 )
@@ -25,6 +23,7 @@ type DeviceData struct {
 	Status       int    `json:"Status"`
 }
 
+// Fictitious XNMS_Device event for demonstration purposes.
 type DeviceEvent struct {
 	event.TenantGroupEvent
 	Data *DeviceData `json:"Data"`
@@ -48,20 +47,5 @@ func NewDeviceEvent(version, operation, timestamp, tenantGroupName string, data 
 }
 
 func (message *DeviceEvent) Discriminator() pubsub.Discriminator {
-	return DiscriminatorDevice
-}
-
-type DeviceEventEnvelope struct {
-	message.EnvelopeMessage
-	Event *DeviceEvent
-}
-
-func NewDeviceEventEnvelope(event *DeviceEvent) *DeviceEventEnvelope {
-	return &DeviceEventEnvelope{
-		Event: event,
-	}
-}
-
-func (message *DeviceEventEnvelope) Discriminator() pubsub.Discriminator {
 	return DiscriminatorDevice
 }

@@ -9,7 +9,9 @@ const (
 	DiscriminatorEmpty Discriminator = ""
 )
 
-var ErrInvalidDiscriminator = errors.New("invalid discriminator")
+var (
+	ErrInvalidDiscriminator = errors.New("invalid discriminator")
+)
 
 type Discriminator string
 

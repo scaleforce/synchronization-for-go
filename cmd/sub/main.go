@@ -108,7 +108,7 @@ func main() {
 		MessagesLimit: viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
 	}
 
-	subscriber := servicebus.NewSubscriber(receiver, dispatcher, message.UnmarshalJSONMessage, logger, subscriberOptions)
+	subscriber := servicebus.NewSubscriber(receiver, dispatcher, message.NewUnmarshalEnvelopeMessageFunc(message.UnmarshalJSONMessage), logger, subscriberOptions)
 
 	if err := subscriber.Run(ctx); err != nil {
 		log.Panic(err)

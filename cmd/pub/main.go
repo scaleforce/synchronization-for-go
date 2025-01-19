@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/scaleforce/synchronization-for-go/internal/azure/servicebus/message"
 	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
+	"github.com/scaleforce/synchronization-for-go/pkg/message/envelope"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event/xnms"
 	"github.com/spf13/viper"
@@ -81,7 +82,7 @@ func main() {
 
 	defer sender.Close(ctx)
 
-	publisher := servicebus.NewPublisher(sender, message.MarshalJSONMessage, logger, nil)
+	publisher := servicebus.NewPublisher(sender, message.NewMarshalEnvelopeMessageFunc(message.MarshalJSONMessage), logger, nil)
 
 	tick := time.Tick(10 * time.Second)
 
@@ -99,7 +100,9 @@ func main() {
 				},
 			)
 
-			if err := publisher.Publish(ctx, message); err != nil {
+			envelopeMessage := envelope.NewEnvelope(message)
+
+			if err := publisher.Publish(ctx, envelopeMessage); err != nil {
 				log.Panic(err)
 			}
 		}

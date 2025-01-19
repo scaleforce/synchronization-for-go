@@ -58,21 +58,6 @@ func (message *PartnerGroupEvent) Discriminator() pubsub.Discriminator {
 	return DiscriminatorPartnerGroup
 }
 
-type PartnerGroupEventEnvelope struct {
-	message.EnvelopeMessage
-	Event *PartnerGroupEvent
-}
-
-func NewPartnerGroupEventEnvelope(event *PartnerGroupEvent) *PartnerGroupEventEnvelope {
-	return &PartnerGroupEventEnvelope{
-		Event: event,
-	}
-}
-
-func (message *PartnerGroupEventEnvelope) Discriminator() pubsub.Discriminator {
-	return DiscriminatorPartnerGroup
-}
-
 // Flags for Infrastructures
 const InfrastructuresNone int = 0
 const (
@@ -214,20 +199,5 @@ func NewPartnerEvent(version, operation, timestamp, tenantGroupName string, data
 }
 
 func (message *PartnerEvent) Discriminator() pubsub.Discriminator {
-	return DiscriminatorPartner
-}
-
-type PartnerEventEnvelope struct {
-	message.EnvelopeMessage
-	Event *PartnerEvent
-}
-
-func NewPartnerEventEnvelope(event *PartnerEvent) *PartnerEventEnvelope {
-	return &PartnerEventEnvelope{
-		Event: event,
-	}
-}
-
-func (message *PartnerEventEnvelope) Discriminator() pubsub.Discriminator {
 	return DiscriminatorPartner
 }
