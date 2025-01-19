@@ -38,8 +38,6 @@ func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message)
 		return err
 	}
 
-	publisher.logger.Debug("send message")
-
 	if err := publisher.sender.SendMessage(ctx, serviceBusMessage, nil); err != nil {
 		return err
 	}
@@ -93,8 +91,6 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-tick:
-			subscriber.logger.Debug("receive messages")
-
 			serviceBusReceivedMessages, err := subscriber.receiver.ReceiveMessages(ctx, messagesLimit, nil)
 
 			if err != nil {
@@ -102,13 +98,9 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 			}
 
 			for _, serviceBusReceivedMessage := range serviceBusReceivedMessages {
-				subscriber.logger.Debug("unmarshal message")
-
 				message, err := subscriber.unmarshalMessageFunc(serviceBusReceivedMessage)
 
 				if err != nil {
-					subscriber.logger.Error("dead letter message", "error", err)
-
 					deadLetterOptions := &azservicebus.DeadLetterOptions{
 						ErrorDescription: to.Ptr(err.Error()),
 						Reason:           to.Ptr("UnmarshalMessageError"),
@@ -118,46 +110,44 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 						var serviceBusErr *azservicebus.Error
 
 						if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-							subscriber.logger.Warn("message lock lost when attempting to dead letter the message")
+							subscriber.logger.Warn("message lock was lost while trying to dead letter the message")
 
 							continue
 						}
 
 						return err
 					}
+
+					subscriber.logger.Error("message was dead lettered", "error", err)
 				}
 
 				discriminator := message.Discriminator()
 
 				if handler, ok := subscriber.dispatcher.Dispatch(discriminator); ok {
-					subscriber.logger.Debug("handle message")
-
 					if err := handler.Handle(message); err != nil {
-						subscriber.logger.Error("abandon message", "error", err)
-
 						if err := subscriber.receiver.AbandonMessage(ctx, serviceBusReceivedMessage, nil); err != nil {
 							var serviceBusErr *azservicebus.Error
 
 							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-								subscriber.logger.Warn("message lock lost when attempting to abandon the message")
+								subscriber.logger.Warn("message lock was lost while trying to abandon the message")
 
 								continue
 							}
 
 							return err
 						}
+
+						subscriber.logger.Error("message was abandoned", "error", err)
 					}
 				} else {
-					subscriber.logger.Info("message handler not found", "discriminator", discriminator)
+					subscriber.logger.Info("message handler was not found", "discriminator", discriminator)
 				}
-
-				subscriber.logger.Debug("complete message")
 
 				if err := subscriber.receiver.CompleteMessage(ctx, serviceBusReceivedMessage, nil); err != nil {
 					var serviceBusErr *azservicebus.Error
 
 					if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-						subscriber.logger.Warn("message lock lost when attempting to complete the message")
+						subscriber.logger.Warn("message lock was lost while trying to complete the message")
 
 						continue
 					}
