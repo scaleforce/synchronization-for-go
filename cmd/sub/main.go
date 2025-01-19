@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"log/slog"
 	"os"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
+	"github.com/scaleforce/synchronization-for-go/internal/azure/servicebus/message"
 	"github.com/scaleforce/synchronization-for-go/internal/handler/event/hr"
 	"github.com/scaleforce/synchronization-for-go/internal/handler/event/masterdata"
 	"github.com/scaleforce/synchronization-for-go/internal/handler/event/partner"
@@ -108,27 +108,9 @@ func main() {
 		MessagesLimit: viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
 	}
 
-	subscriber := servicebus.NewSubscriber(receiver, dispatcher, unmarshalDiscriminator, unmarshalMessage, logger, subscriberOptions)
+	subscriber := servicebus.NewSubscriber(receiver, dispatcher, message.UnmarshalJSONMessage, logger, subscriberOptions)
 
 	if err := subscriber.Run(ctx); err != nil {
 		log.Panic(err)
 	}
-}
-
-func unmarshalDiscriminator(serviceBusReceivedMessage *azservicebus.ReceivedMessage, discriminator *pubsub.Discriminator) error {
-	partialMessage := &struct {
-		Type string `json:"Type"`
-	}{}
-
-	if err := json.Unmarshal(serviceBusReceivedMessage.Body, &partialMessage); err != nil {
-		return err
-	}
-
-	*discriminator = pubsub.Discriminator(partialMessage.Type)
-
-	return nil
-}
-
-func unmarshalMessage(serviceBusReceivedMessage *azservicebus.ReceivedMessage, message pubsub.Message) error {
-	return json.Unmarshal(serviceBusReceivedMessage.Body, message)
 }

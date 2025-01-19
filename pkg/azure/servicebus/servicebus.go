@@ -38,6 +38,8 @@ func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message)
 		return err
 	}
 
+	publisher.logger.Debug("send message")
+
 	if err := publisher.sender.SendMessage(ctx, serviceBusMessage, nil); err != nil {
 		return err
 	}
@@ -45,9 +47,7 @@ func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message)
 	return nil
 }
 
-type UnmarshalDiscriminatorFunc func(serviceBusReceivedMessage *azservicebus.ReceivedMessage, discriminator *pubsub.Discriminator) error
-
-type UnmarshalMessageFunc func(serviceBusReceivedMessage *azservicebus.ReceivedMessage, message pubsub.Message) error
+type UnmarshalMessageFunc func(serviceBusReceivedMessage *azservicebus.ReceivedMessage) (pubsub.Message, error)
 
 type SubscriberOptions struct {
 	Interval      time.Duration
@@ -55,22 +55,20 @@ type SubscriberOptions struct {
 }
 
 type Subscriber struct {
-	receiver                   *azservicebus.Receiver
-	dispatcher                 *pubsub.Dispatcher
-	unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc
-	unmarshalMessageFunc       UnmarshalMessageFunc
-	logger                     *slog.Logger
-	options                    *SubscriberOptions
+	receiver             *azservicebus.Receiver
+	dispatcher           *pubsub.Dispatcher
+	unmarshalMessageFunc UnmarshalMessageFunc
+	logger               *slog.Logger
+	options              *SubscriberOptions
 }
 
-func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalDiscriminatorFunc UnmarshalDiscriminatorFunc, unmarshalMessageFunc UnmarshalMessageFunc, logger *slog.Logger, options *SubscriberOptions) *Subscriber {
+func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalMessageFunc UnmarshalMessageFunc, logger *slog.Logger, options *SubscriberOptions) *Subscriber {
 	return &Subscriber{
-		receiver:                   receiver,
-		dispatcher:                 dispatcher,
-		unmarshalDiscriminatorFunc: unmarshalDiscriminatorFunc,
-		unmarshalMessageFunc:       unmarshalMessageFunc,
-		logger:                     logger,
-		options:                    options,
+		receiver:             receiver,
+		dispatcher:           dispatcher,
+		unmarshalMessageFunc: unmarshalMessageFunc,
+		logger:               logger,
+		options:              options,
 	}
 }
 
@@ -95,6 +93,8 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-tick:
+			subscriber.logger.Debug("receive messages")
+
 			serviceBusReceivedMessages, err := subscriber.receiver.ReceiveMessages(ctx, messagesLimit, nil)
 
 			if err != nil {
@@ -102,85 +102,68 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 			}
 
 			for _, serviceBusReceivedMessage := range serviceBusReceivedMessages {
-				discriminator := pubsub.DiscriminatorEmpty
+				subscriber.logger.Debug("unmarshal message")
 
-				if err := subscriber.unmarshalDiscriminatorFunc(serviceBusReceivedMessage, &discriminator); err != nil {
+				message, err := subscriber.unmarshalMessageFunc(serviceBusReceivedMessage)
+
+				if err != nil {
+					subscriber.logger.Error("dead letter message", "error", err)
+
 					deadLetterOptions := &azservicebus.DeadLetterOptions{
 						ErrorDescription: to.Ptr(err.Error()),
-						Reason:           to.Ptr("UnmarshalDiscriminatorError"),
+						Reason:           to.Ptr("UnmarshalMessageError"),
 					}
 
 					if err := subscriber.receiver.DeadLetterMessage(ctx, serviceBusReceivedMessage, deadLetterOptions); err != nil {
 						var serviceBusErr *azservicebus.Error
 
 						if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-							subscriber.logger.Warn("message lock lost", "discriminator", discriminator)
+							subscriber.logger.Warn("message lock lost when attempting to dead letter the message")
 
 							continue
 						}
 
 						return err
 					}
-
-					subscriber.logger.Error("dead letter message", "discriminator", discriminator, "error", err)
 				}
 
+				discriminator := message.Discriminator()
+
 				if handler, ok := subscriber.dispatcher.Dispatch(discriminator); ok {
-					message := handler.Create()
-
-					if err := subscriber.unmarshalMessageFunc(serviceBusReceivedMessage, message); err != nil {
-						deadLetterOptions := &azservicebus.DeadLetterOptions{
-							ErrorDescription: to.Ptr(err.Error()),
-							Reason:           to.Ptr("UnmarshalMessageError"),
-						}
-
-						if err := subscriber.receiver.DeadLetterMessage(ctx, serviceBusReceivedMessage, deadLetterOptions); err != nil {
-							var serviceBusErr *azservicebus.Error
-
-							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-								subscriber.logger.Warn("message lock lost", "discriminator", discriminator)
-
-								continue
-							}
-
-							return err
-						}
-
-						subscriber.logger.Error("dead letter message", "discriminator", discriminator, "error", err)
-					}
+					subscriber.logger.Debug("handle message")
 
 					if err := handler.Handle(message); err != nil {
+						subscriber.logger.Error("abandon message", "error", err)
+
 						if err := subscriber.receiver.AbandonMessage(ctx, serviceBusReceivedMessage, nil); err != nil {
 							var serviceBusErr *azservicebus.Error
 
 							if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-								subscriber.logger.Warn("message lock lost", "discriminator", discriminator)
+								subscriber.logger.Warn("message lock lost when attempting to abandon the message")
 
 								continue
 							}
 
 							return err
 						}
-
-						subscriber.logger.Error("abandon message", "discriminator", discriminator, "error", err)
 					}
 				} else {
 					subscriber.logger.Info("message handler not found", "discriminator", discriminator)
 				}
 
+				subscriber.logger.Debug("complete message")
+
 				if err := subscriber.receiver.CompleteMessage(ctx, serviceBusReceivedMessage, nil); err != nil {
 					var serviceBusErr *azservicebus.Error
 
 					if errors.As(err, &serviceBusErr) && serviceBusErr.Code == azservicebus.CodeLockLost {
-						subscriber.logger.Warn("message lock lost", "discriminator", discriminator)
+						subscriber.logger.Warn("message lock lost when attempting to complete the message")
 
 						continue
 					}
 
 					return err
 				}
-
-				subscriber.logger.Info("complete message", "discriminator", discriminator)
 			}
 		}
 	}

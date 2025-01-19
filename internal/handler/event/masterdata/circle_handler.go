@@ -7,7 +7,6 @@ import (
 
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/masterdata"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsuberr"
 )
 
 type CircleEventHandler struct {
@@ -24,15 +23,11 @@ func (handler *CircleEventHandler) Discriminator() pubsub.Discriminator {
 	return event.DiscriminatorCircle
 }
 
-func (handler *CircleEventHandler) Create() pubsub.Message {
-	return &event.CircleEvent{}
-}
-
 func (handler *CircleEventHandler) Handle(message pubsub.Message) error {
 	circleEvent, ok := message.(*event.CircleEvent)
 
 	if !ok {
-		return pubsuberr.ErrInvalidDiscriminator
+		return pubsub.ErrInvalidDiscriminator
 	}
 
 	data, err := json.MarshalIndent(circleEvent, "", "  ")

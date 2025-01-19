@@ -7,7 +7,6 @@ import (
 
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/partner"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsuberr"
 )
 
 type PartnerEventHandler struct {
@@ -24,15 +23,11 @@ func (handler *PartnerEventHandler) Discriminator() pubsub.Discriminator {
 	return event.DiscriminatorPartner
 }
 
-func (handler *PartnerEventHandler) Create() pubsub.Message {
-	return &event.PartnerEvent{}
-}
-
 func (handler *PartnerEventHandler) Handle(message pubsub.Message) error {
 	partnerEvent, ok := message.(*event.PartnerEvent)
 
 	if !ok {
-		return pubsuberr.ErrInvalidDiscriminator
+		return pubsub.ErrInvalidDiscriminator
 	}
 
 	data, err := json.MarshalIndent(partnerEvent, "", "  ")

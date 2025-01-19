@@ -7,7 +7,6 @@ import (
 
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/hr"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsuberr"
 )
 
 type PositionEventHandler struct {
@@ -24,15 +23,11 @@ func (handler *PositionEventHandler) Discriminator() pubsub.Discriminator {
 	return event.DiscriminatorPosition
 }
 
-func (handler *PositionEventHandler) Create() pubsub.Message {
-	return &event.PositionEvent{}
-}
-
 func (handler *PositionEventHandler) Handle(message pubsub.Message) error {
 	positionEvent, ok := message.(*event.PositionEvent)
 
 	if !ok {
-		return pubsuberr.ErrInvalidDiscriminator
+		return pubsub.ErrInvalidDiscriminator
 	}
 
 	data, err := json.MarshalIndent(positionEvent, "", "  ")

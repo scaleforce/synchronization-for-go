@@ -7,7 +7,6 @@ import (
 
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/masterdata"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsuberr"
 )
 
 type ZoneEventHandler struct {
@@ -24,15 +23,11 @@ func (handler *ZoneEventHandler) Discriminator() pubsub.Discriminator {
 	return event.DiscriminatorZone
 }
 
-func (handler *ZoneEventHandler) Create() pubsub.Message {
-	return &event.ZoneEvent{}
-}
-
 func (handler *ZoneEventHandler) Handle(message pubsub.Message) error {
 	zoneEvent, ok := message.(*event.ZoneEvent)
 
 	if !ok {
-		return pubsuberr.ErrInvalidDiscriminator
+		return pubsub.ErrInvalidDiscriminator
 	}
 
 	data, err := json.MarshalIndent(zoneEvent, "", "  ")

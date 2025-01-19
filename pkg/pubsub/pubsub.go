@@ -2,11 +2,14 @@ package pubsub
 
 import (
 	"context"
+	"errors"
 )
 
 const (
 	DiscriminatorEmpty Discriminator = ""
 )
+
+var ErrInvalidDiscriminator = errors.New("invalid discriminator")
 
 type Discriminator string
 
@@ -20,7 +23,6 @@ type Publisher interface {
 
 type Handler interface {
 	Discriminator() Discriminator
-	Create() Message
 	Handle(message Message) error
 }
 

@@ -48,6 +48,21 @@ func (message *CityEvent) Discriminator() pubsub.Discriminator {
 	return DiscriminatorCity
 }
 
+type CityEventEnvelope struct {
+	message.EnvelopeMessage
+	Event *CityEvent
+}
+
+func NewCityEventEnvelope(event *CityEvent) *CityEventEnvelope {
+	return &CityEventEnvelope{
+		Event: event,
+	}
+}
+
+func (message *CityEventEnvelope) Discriminator() pubsub.Discriminator {
+	return DiscriminatorCity
+}
+
 type CircleData struct {
 	Code       string `json:"Code"`
 	Name       string `json:"Name"`
@@ -77,6 +92,21 @@ func NewCircleEvent(version, operation, timestamp, tenantGroupName string, data 
 }
 
 func (message *CircleEvent) Discriminator() pubsub.Discriminator {
+	return DiscriminatorCircle
+}
+
+type CircleEventEnvelope struct {
+	message.EnvelopeMessage
+	Event *CircleEvent
+}
+
+func NewCircleEventEnvelope(event *CircleEvent) *CircleEventEnvelope {
+	return &CircleEventEnvelope{
+		Event: event,
+	}
+}
+
+func (message *CircleEventEnvelope) Discriminator() pubsub.Discriminator {
 	return DiscriminatorCircle
 }
 
@@ -111,5 +141,20 @@ func NewZoneEvent(version, operation, timestamp, tenantGroupName string, data *Z
 }
 
 func (message *ZoneEvent) Discriminator() pubsub.Discriminator {
+	return DiscriminatorZone
+}
+
+type ZoneEventEnvelope struct {
+	message.EnvelopeMessage
+	Event *ZoneEvent
+}
+
+func NewZoneEventEnvelope(event *ZoneEvent) *ZoneEventEnvelope {
+	return &ZoneEventEnvelope{
+		Event: event,
+	}
+}
+
+func (message *ZoneEventEnvelope) Discriminator() pubsub.Discriminator {
 	return DiscriminatorZone
 }

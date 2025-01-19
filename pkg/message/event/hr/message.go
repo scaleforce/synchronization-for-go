@@ -115,6 +115,21 @@ func (message *EmployeeEvent) Discriminator() pubsub.Discriminator {
 	return DiscriminatorEmployee
 }
 
+type EmployeeEventEnvelope struct {
+	message.EnvelopeMessage
+	Event *EmployeeEvent
+}
+
+func NewEmployeeEventEnvelope(event *EmployeeEvent) *EmployeeEventEnvelope {
+	return &EmployeeEventEnvelope{
+		Event: event,
+	}
+}
+
+func (message *EmployeeEventEnvelope) Discriminator() pubsub.Discriminator {
+	return DiscriminatorEmployee
+}
+
 type PositionData struct {
 	Code          string `json:"Code"`
 	Name          string `json:"Name"`
@@ -145,6 +160,21 @@ func NewPositionEvent(version, operation, timestamp, tenantGroupName string, dat
 }
 
 func (message *PositionEvent) Discriminator() pubsub.Discriminator {
+	return DiscriminatorPosition
+}
+
+type PositionEventEnvelope struct {
+	message.EnvelopeMessage
+	Event *PositionEvent
+}
+
+func NewPositionEventEnvelope(event *PositionEvent) *PositionEventEnvelope {
+	return &PositionEventEnvelope{
+		Event: event,
+	}
+}
+
+func (message *PositionEventEnvelope) Discriminator() pubsub.Discriminator {
 	return DiscriminatorPosition
 }
 
@@ -179,4 +209,19 @@ func NewRoleEvent(version, operation, timestamp, tenantGroupName string, data *R
 
 func (message *RoleEvent) Discriminator() pubsub.Discriminator {
 	return DiscriminatorRole
+}
+
+type RoleEventEnvelope struct {
+	message.EnvelopeMessage
+	Event *RoleEvent
+}
+
+func NewRoleEventEnvelope(event *RoleEvent) *RoleEventEnvelope {
+	return &RoleEventEnvelope{
+		Event: event,
+	}
+}
+
+func (message *RoleEventEnvelope) Discriminator() pubsub.Discriminator {
+	return DiscriminatorPosition
 }

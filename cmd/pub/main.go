@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"log/slog"
 	"os"
@@ -11,10 +10,10 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
+	"github.com/scaleforce/synchronization-for-go/internal/azure/servicebus/message"
 	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event/xnms"
-	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 	"github.com/spf13/viper"
 )
 
@@ -82,7 +81,7 @@ func main() {
 
 	defer sender.Close(ctx)
 
-	publisher := servicebus.NewPublisher(sender, marshalMessage, logger, nil)
+	publisher := servicebus.NewPublisher(sender, message.MarshalJSONMessage, logger, nil)
 
 	tick := time.Tick(10 * time.Second)
 
@@ -105,18 +104,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func marshalMessage(message pubsub.Message) (*azservicebus.Message, error) {
-	body, err := json.Marshal(message)
-
-	if err != nil {
-		return nil, err
-	}
-
-	serviceBusMessage := &azservicebus.Message{
-		Body: body,
-	}
-
-	return serviceBusMessage, nil
 }
