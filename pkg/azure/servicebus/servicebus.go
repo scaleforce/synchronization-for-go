@@ -119,6 +119,8 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 					}
 
 					subscriber.logger.Error("message was dead lettered", "error", err)
+
+					continue
 				}
 
 				discriminator := message.Discriminator()
@@ -138,6 +140,8 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 						}
 
 						subscriber.logger.Error("message was abandoned", "error", err)
+
+						continue
 					}
 				} else {
 					subscriber.logger.Info("message handler was not found", "discriminator", discriminator)
