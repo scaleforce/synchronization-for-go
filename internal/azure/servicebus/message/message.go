@@ -4,29 +4,32 @@ import (
 	"encoding/json"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
+	"github.com/scaleforce/synchronization-for-go/internal/message/envelope"
+	envelopemessage "github.com/scaleforce/synchronization-for-go/internal/message/envelope"
 	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
-	"github.com/scaleforce/synchronization-for-go/pkg/message/envelope"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event/hr"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event/masterdata"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event/partner"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
-func MarshalJSONMessage(message pubsub.Message) (*azservicebus.Message, error) {
-	body, err := json.Marshal(message)
+func NewMarshalMessageFunc() servicebus.MarshalMessageFunc {
+	return func(message pubsub.Message) (*azservicebus.Message, error) {
+		body, err := json.Marshal(message)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		serviceBusMessage := &azservicebus.Message{
+			Body: body,
+		}
+
+		return serviceBusMessage, nil
 	}
-
-	serviceBusMessage := &azservicebus.Message{
-		Body: body,
-	}
-
-	return serviceBusMessage, nil
 }
 
-func createMessage(discriminator pubsub.Discriminator) pubsub.Message {
+func CreateMessage(discriminator pubsub.Discriminator) pubsub.Message {
 	var message pubsub.Message
 
 	switch discriminator {
@@ -51,39 +54,53 @@ func createMessage(discriminator pubsub.Discriminator) pubsub.Message {
 	return message
 }
 
-func UnmarshalJSONMessage(serviceBusReceivedMessage *azservicebus.ReceivedMessage) (pubsub.Message, error) {
-	partialMessage := &struct {
-		Type string `json:"Type"`
-	}{}
+type CreateMessageFunc func(discriminator pubsub.Discriminator) pubsub.Message
 
-	if err := json.Unmarshal(serviceBusReceivedMessage.Body, &partialMessage); err != nil {
-		return nil, err
-	}
+func NewUnmarshalMessageFunc(createMessageFunc CreateMessageFunc) servicebus.UnmarshalMessageFunc {
+	return func(serviceBusReceivedMessage *azservicebus.ReceivedMessage) (pubsub.Message, error) {
+		partialMessage := &struct {
+			Type string `json:"Type"`
+		}{}
 
-	discriminator := pubsub.Discriminator(partialMessage.Type)
-
-	message := createMessage(discriminator)
-
-	if err := json.Unmarshal(serviceBusReceivedMessage.Body, &message); err != nil {
-		return nil, err
-	}
-
-	return message, nil
-}
-
-func NewMarshalEnvelopeMessageFunc(marshalMessageFunc servicebus.MarshalMessageFunc) servicebus.MarshalMessageFunc {
-	return func(message pubsub.Message) (*azservicebus.Message, error) {
-		envelopeMessage, ok := message.(*envelope.Envelope)
-
-		if !ok {
-			return nil, envelope.ErrInvalidEnvelope
+		if err := json.Unmarshal(serviceBusReceivedMessage.Body, &partialMessage); err != nil {
+			return nil, err
 		}
 
-		return marshalMessageFunc(envelopeMessage.Message)
+		discriminator := pubsub.Discriminator(partialMessage.Type)
+
+		message := createMessageFunc(discriminator)
+
+		if err := json.Unmarshal(serviceBusReceivedMessage.Body, &message); err != nil {
+			return nil, err
+		}
+
+		return message, nil
 	}
 }
 
-func NewUnmarshalEnvelopeMessageFunc(unmarshalMessageFunc servicebus.UnmarshalMessageFunc) servicebus.UnmarshalMessageFunc {
+func NewMarshalEnvelopeFunc(marshalMessageFunc servicebus.MarshalMessageFunc) servicebus.MarshalMessageFunc {
+	return func(message pubsub.Message) (*azservicebus.Message, error) {
+		envelope, ok := message.(*envelopemessage.Envelope)
+
+		if !ok {
+			return nil, envelopemessage.ErrInvalidEnvelope
+		}
+
+		serviceBusMessage, err := marshalMessageFunc(envelope.Message)
+
+		if err != nil {
+			return nil, err
+		}
+
+		serviceBusMessage.ApplicationProperties = envelope.ApplicationProperties
+		serviceBusMessage.SessionID = envelope.SessionID
+		serviceBusMessage.MessageID = envelope.MessageID
+
+		return serviceBusMessage, nil
+	}
+}
+
+func NewUnmarshalReceivedEnvelopeFunc(unmarshalMessageFunc servicebus.UnmarshalMessageFunc) servicebus.UnmarshalMessageFunc {
 	return func(serviceBusReceivedMessage *azservicebus.ReceivedMessage) (pubsub.Message, error) {
 		message, err := unmarshalMessageFunc(serviceBusReceivedMessage)
 
@@ -91,10 +108,12 @@ func NewUnmarshalEnvelopeMessageFunc(unmarshalMessageFunc servicebus.UnmarshalMe
 			return nil, err
 		}
 
-		envelopeMessage := envelope.NewEnvelope(message)
+		receivedEnvelope := envelope.NewReceivedEnvelope(message)
 
-		envelopeMessage.SequenceNumber = serviceBusReceivedMessage.SequenceNumber
+		receivedEnvelope.ApplicationProperties = serviceBusReceivedMessage.ApplicationProperties
+		receivedEnvelope.EnqueuedSequenceNumber = serviceBusReceivedMessage.EnqueuedSequenceNumber
+		receivedEnvelope.EnqueuedTime = serviceBusReceivedMessage.EnqueuedTime
 
-		return envelopeMessage, nil
+		return receivedEnvelope, nil
 	}
 }

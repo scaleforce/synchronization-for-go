@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	envelopemessage "github.com/scaleforce/synchronization-for-go/internal/message/envelope"
 	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/masterdata"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
@@ -24,7 +25,13 @@ func (handler *ZoneEventHandler) Discriminator() pubsub.Discriminator {
 }
 
 func (handler *ZoneEventHandler) Handle(message pubsub.Message) error {
-	zoneEvent, ok := message.(*event.ZoneEvent)
+	receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+	if !ok {
+		return envelopemessage.ErrInvalidReceivedEnvelope
+	}
+
+	zoneEvent, ok := receivedEnvelope.Message.(*event.ZoneEvent)
 
 	if !ok {
 		return pubsub.ErrInvalidDiscriminator

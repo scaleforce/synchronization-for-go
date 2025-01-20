@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/partner"
+	envelopemessage "github.com/scaleforce/synchronization-for-go/internal/message/envelope"
+	partnerevent "github.com/scaleforce/synchronization-for-go/pkg/message/event/partner"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
@@ -20,11 +21,17 @@ func NewPartnerGroupEventHandler(logger *slog.Logger) *PartnerGroupEventHandler 
 }
 
 func (handler *PartnerGroupEventHandler) Discriminator() pubsub.Discriminator {
-	return event.DiscriminatorPartnerGroup
+	return partnerevent.DiscriminatorPartnerGroup
 }
 
 func (handler *PartnerGroupEventHandler) Handle(message pubsub.Message) error {
-	partnerGroupEvent, ok := message.(*event.PartnerGroupEvent)
+	envelope, ok := message.(*envelopemessage.Envelope)
+
+	if !ok {
+		return envelopemessage.ErrInvalidReceivedEnvelope
+	}
+
+	partnerGroupEvent, ok := envelope.Message.(*partnerevent.PartnerGroupEvent)
 
 	if !ok {
 		return pubsub.ErrInvalidDiscriminator

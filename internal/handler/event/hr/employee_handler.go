@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/scaleforce/synchronization-for-go/pkg/message/envelope"
-	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/hr"
+	envelopemessage "github.com/scaleforce/synchronization-for-go/internal/message/envelope"
+	hrevent "github.com/scaleforce/synchronization-for-go/pkg/message/event/hr"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
@@ -21,17 +21,17 @@ func NewEmployeeEventHandler(logger *slog.Logger) *EmployeeEventHandler {
 }
 
 func (handler *EmployeeEventHandler) Discriminator() pubsub.Discriminator {
-	return event.DiscriminatorEmployee
+	return hrevent.DiscriminatorEmployee
 }
 
 func (handler *EmployeeEventHandler) Handle(message pubsub.Message) error {
-	envelopeMessage, ok := message.(*envelope.Envelope)
+	receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
 	if !ok {
-		return envelope.ErrInvalidEnvelope
+		return envelopemessage.ErrInvalidReceivedEnvelope
 	}
 
-	employeeEvent, ok := envelopeMessage.Message.(*event.EmployeeEvent)
+	employeeEvent, ok := receivedEnvelope.Message.(*hrevent.EmployeeEvent)
 
 	if !ok {
 		return pubsub.ErrInvalidDiscriminator

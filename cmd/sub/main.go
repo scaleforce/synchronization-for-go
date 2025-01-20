@@ -58,14 +58,15 @@ func init() {
 
 	var err error
 
-	credential, err = azidentity.NewDefaultAzureCredential(nil)
+	/*
+		credential, err = azidentity.NewDefaultAzureCredential(nil)
 
-	if err != nil {
-		log.Panic(err)
-	}
+		if err != nil {
+			log.Panic(err)
+		}
 
-	_ = credential
-	// client, err = azservicebus.NewClient(viper.GetString("AZURE_SERVICEBUS_NAMESPACE"), credential, nil)
+		client, err = azservicebus.NewClient(viper.GetString("AZURE_SERVICEBUS_NAMESPACE"), credential, nil)
+	*/
 	client, err = azservicebus.NewClientFromConnectionString(viper.GetString("AZURE_SERVICEBUS_CONNECTION_STRING"), nil)
 
 	if err != nil {
@@ -108,7 +109,7 @@ func main() {
 		MessagesLimit: viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
 	}
 
-	subscriber := servicebus.NewSubscriber(receiver, dispatcher, message.NewUnmarshalEnvelopeMessageFunc(message.UnmarshalJSONMessage), logger, subscriberOptions)
+	subscriber := servicebus.NewSubscriber(receiver, dispatcher, message.NewUnmarshalReceivedEnvelopeFunc(message.NewUnmarshalMessageFunc(message.CreateMessage)), logger, subscriberOptions)
 
 	if err := subscriber.Run(ctx); err != nil {
 		log.Panic(err)

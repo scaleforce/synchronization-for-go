@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	event "github.com/scaleforce/synchronization-for-go/pkg/message/event/masterdata"
+	envelopemessage "github.com/scaleforce/synchronization-for-go/internal/message/envelope"
+	masterdataevent "github.com/scaleforce/synchronization-for-go/pkg/message/event/masterdata"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
@@ -20,11 +21,17 @@ func NewCircleEventHandler(logger *slog.Logger) *CircleEventHandler {
 }
 
 func (handler *CircleEventHandler) Discriminator() pubsub.Discriminator {
-	return event.DiscriminatorCircle
+	return masterdataevent.DiscriminatorCircle
 }
 
 func (handler *CircleEventHandler) Handle(message pubsub.Message) error {
-	circleEvent, ok := message.(*event.CircleEvent)
+	receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+	if !ok {
+		return envelopemessage.ErrInvalidReceivedEnvelope
+	}
+
+	circleEvent, ok := receivedEnvelope.Message.(*masterdataevent.CircleEvent)
 
 	if !ok {
 		return pubsub.ErrInvalidDiscriminator

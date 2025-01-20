@@ -11,8 +11,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	"github.com/scaleforce/synchronization-for-go/internal/azure/servicebus/message"
+	envelopemessage "github.com/scaleforce/synchronization-for-go/internal/message/envelope"
 	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
-	"github.com/scaleforce/synchronization-for-go/pkg/message/envelope"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event/xnms"
 	"github.com/spf13/viper"
@@ -54,14 +54,15 @@ func init() {
 
 	var err error
 
-	credential, err = azidentity.NewDefaultAzureCredential(nil)
+	/*
+		credential, err = azidentity.NewDefaultAzureCredential(nil)
 
-	if err != nil {
-		log.Panic(err)
-	}
+		if err != nil {
+			log.Panic(err)
+		}
 
-	_ = credential
-	// client, err = azservicebus.NewClient(viper.GetString("AZURE_SERVICEBUS_NAMESPACE"), credential, nil)
+		client, err = azservicebus.NewClient(viper.GetString("AZURE_SERVICEBUS_NAMESPACE"), credential, nil)
+	*/
 	client, err = azservicebus.NewClientFromConnectionString(viper.GetString("AZURE_SERVICEBUS_CONNECTION_STRING"), nil)
 
 	if err != nil {
@@ -82,7 +83,7 @@ func main() {
 
 	defer sender.Close(ctx)
 
-	publisher := servicebus.NewPublisher(sender, message.NewMarshalEnvelopeMessageFunc(message.MarshalJSONMessage), logger, nil)
+	publisher := servicebus.NewPublisher(sender, message.NewMarshalEnvelopeFunc(message.NewMarshalMessageFunc()), logger, nil)
 
 	tick := time.Tick(10 * time.Second)
 
@@ -93,16 +94,16 @@ func main() {
 		case <-tick:
 			message := xnms.NewDeviceEvent(event.Version1, event.OperationAddOrSet, time.Now().UTC().Format(time.RFC3339), TenantGroupNameExcitel,
 				&xnms.DeviceData{
-					Code:         "123",
-					SerialNumber: "123",
+					Code:         "1234",
+					SerialNumber: "1234",
 					TenantName:   TenantNameDelhi,
 					Status:       xnms.StatusOnline,
 				},
 			)
 
-			envelopeMessage := envelope.NewEnvelope(message)
+			envelope := envelopemessage.NewEnvelope(message)
 
-			if err := publisher.Publish(ctx, envelopeMessage); err != nil {
+			if err := publisher.Publish(ctx, envelope); err != nil {
 				log.Panic(err)
 			}
 		}
