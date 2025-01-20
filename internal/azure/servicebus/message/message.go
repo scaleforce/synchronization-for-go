@@ -58,6 +58,8 @@ type CreateMessageFunc func(discriminator pubsub.Discriminator) pubsub.Message
 
 func NewUnmarshalMessageFunc(createMessageFunc CreateMessageFunc) servicebus.UnmarshalMessageFunc {
 	return func(serviceBusReceivedMessage *azservicebus.ReceivedMessage) (pubsub.Message, error) {
+		// discriminator := pubsub.Discriminator(serviceBusReceivedMessage.ApplicationProperties["Type"].(string))
+
 		partialMessage := &struct {
 			Type string `json:"Type"`
 		}{}

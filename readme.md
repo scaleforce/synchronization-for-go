@@ -1,4 +1,4 @@
-## Synchronization SDK for Go
+## Synchronization for Go
 
 ### Overview
 
@@ -11,6 +11,7 @@ This repo contains:
 - Examples
     - Publisher app that sends messages to Azure Service Bus topic in `cmd/pub`
     - Subscriber app that receives messages from Azure Service Bus subscription and prints them to the log (console) in `cmd/sub`
+    - Envelope messages in `internal/message/envelope` to access Azure Service Bus system properties like the message sequence number. This can be useful when leveraging the full capabilities of Azure Service Bus to address advanced scenarios such as message deduplication, ordering, partitioning, sessions, request-reply patterns and more.
     - Handlers to process some of the main messages in `internal/handler`, by printing them to the log (console)
 
 **You can import the reusable components into the publisher/subscriber app and use them "as is", or use them as examples if you prefer to create a custom implementation.**

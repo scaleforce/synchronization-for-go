@@ -37,6 +37,7 @@ func (handler *CityEventHandler) Handle(message pubsub.Message) error {
 		return pubsub.ErrInvalidDiscriminator
 	}
 
+	// Replace with your own synchronization logic
 	data, err := json.MarshalIndent(cityEvent, "", "  ")
 
 	if err != nil {
@@ -44,6 +45,7 @@ func (handler *CityEventHandler) Handle(message pubsub.Message) error {
 	}
 
 	fmt.Println(string(data))
+	// Replace with your own synchronization logic
 
 	return nil
 }
