@@ -25,13 +25,13 @@ func (handler *PartnerGroupEventHandler) Discriminator() pubsub.Discriminator {
 }
 
 func (handler *PartnerGroupEventHandler) Handle(message pubsub.Message) error {
-	envelope, ok := message.(*envelopemessage.Envelope)
+	receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
 	if !ok {
 		return envelopemessage.ErrInvalidReceivedEnvelope
 	}
 
-	partnerGroupEvent, ok := envelope.Message.(*partnerevent.PartnerGroupEvent)
+	partnerGroupEvent, ok := receivedEnvelope.Message.(*partnerevent.PartnerGroupEvent)
 
 	if !ok {
 		return pubsub.ErrInvalidDiscriminator
