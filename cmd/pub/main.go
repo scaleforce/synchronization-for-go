@@ -103,6 +103,8 @@ func main() {
 
 			envelope := envelopemessage.NewEnvelope(message)
 
+			envelope.ApplicationProperties = map[string]any{"Type": "XNMS_Device"}
+
 			if err := publisher.Publish(ctx, envelope); err != nil {
 				log.Panic(err)
 			}
