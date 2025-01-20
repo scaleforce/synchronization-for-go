@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
-	"github.com/scaleforce/synchronization-for-go/internal/message/envelope"
+	emptymessage "github.com/scaleforce/synchronization-for-go/internal/message/empty"
 	envelopemessage "github.com/scaleforce/synchronization-for-go/internal/message/envelope"
 	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event/hr"
@@ -49,6 +49,8 @@ func CreateMessage(discriminator pubsub.Discriminator) pubsub.Message {
 		message = &hr.PositionEvent{}
 	case hr.DiscriminatorRole:
 		message = &hr.RoleEvent{}
+	default:
+		message = &emptymessage.Empty{}
 	}
 
 	return message
@@ -110,7 +112,7 @@ func NewUnmarshalReceivedEnvelopeFunc(unmarshalMessageFunc servicebus.UnmarshalM
 			return nil, err
 		}
 
-		receivedEnvelope := envelope.NewReceivedEnvelope(message)
+		receivedEnvelope := envelopemessage.NewReceivedEnvelope(message)
 
 		receivedEnvelope.ApplicationProperties = serviceBusReceivedMessage.ApplicationProperties
 		receivedEnvelope.EnqueuedSequenceNumber = serviceBusReceivedMessage.EnqueuedSequenceNumber
