@@ -17,7 +17,7 @@ This repo contains:
 **You can import the reusable components into the publisher/subscriber app and use them "as is", or use them as examples if you prefer to create a custom implementation.**
 
 > [!IMPORTANT]
-> Implementing synchronization with a specific Excitel system means implementing handlers for some of the messages (usually events) published by that system.
+> To integrate with a specific Excitel system, you need to implement handlers for certain synchronization messages (typically events) that the system publishes.
 
 Synchronization infrastructure between all systems at Excitel use the same topology:
 
@@ -89,6 +89,9 @@ AZURE_SERVICEBUS_SUBSCRIPTION=<Add the subscription here>
 cd cmd/sub
 go run main.go
 ```
+
+> [!IMPORTANT]
+> For production scenarios, you must select a hosting option for the publisher/subscriber app that ensures automatic restarts in case of failure and proper level of monitoring.
 
 ### Available configuration options
 
