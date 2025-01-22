@@ -19,7 +19,7 @@ This repo contains:
 > [!IMPORTANT]
 > To integrate with a specific Excitel system, you need to implement handlers for certain synchronization messages (typically events) that the system publishes.
 
-Synchronization infrastructure between all systems at Excitel use the same topology:
+The synchronization infrastructure between all systems at Excitel uses the same topology:
 
 ```mermaid
 graph LR
