@@ -161,8 +161,10 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 
 	producerGroup.Wait()
 
-	for _, partition := range subscriber.partitions {
-		close(partition)
+	if consumersRunToCompletion {
+		for _, partition := range subscriber.partitions {
+			close(partition)
+		}
 	}
 
 	consumersGroup.Wait()
