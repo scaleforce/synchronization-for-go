@@ -135,8 +135,6 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 		producerErr = subscriber.produce(ctx)
 	}()
 
-	consumerErrs := []error{}
-
 	var consumeCtx context.Context
 
 	if consumersRunToCompletion {
@@ -144,6 +142,8 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 	} else {
 		consumeCtx = ctx
 	}
+
+	consumerErrs := []error{}
 
 	consumersGroup := sync.WaitGroup{}
 
