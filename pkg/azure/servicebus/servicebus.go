@@ -84,6 +84,10 @@ func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatche
 
 	partitions := make([]chan *partitionMessage, partitionsCount)
 
+	for partitionIndex := range partitions {
+		partitions[partitionIndex] = make(chan *partitionMessage, 10)
+	}
+
 	return &Subscriber{
 		receiver:             receiver,
 		dispatcher:           dispatcher,
