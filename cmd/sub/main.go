@@ -97,10 +97,10 @@ func main() {
 	defer receiver.Close(ctx)
 
 	subscriberOptions := &servicebus.SubscriberOptions{
-		Interval:                 viper.GetDuration("AZURE_SERVICEBUS_INTERVAL"),
-		MessagesLimit:            viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
-		PartitionsCount:          viper.GetInt("AZURE_SERVICEBUS_PARTITIONS_COUNT"),
-		ConsumersRunToCompletion: viper.GetBool("AZURE_SERVICEBUS_CONSUMERS_RUN_TO_COMPLETION"),
+		Interval:        viper.GetDuration("AZURE_SERVICEBUS_INTERVAL"),
+		MessagesLimit:   viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
+		PartitionsCount: viper.GetInt("AZURE_SERVICEBUS_PARTITIONS_COUNT"),
+		PartitionsDrain: viper.GetBool("AZURE_SERVICEBUS_PARTITIONS_DRAIN"),
 	}
 
 	subscriber := servicebus.NewSubscriber(receiver, dispatcher, util.NewUnmarshalReceivedEnvelopeFunc(util.NewUnmarshalMessageFunc(util.CreateMessage)), util.GetPartitionName, logger, subscriberOptions)

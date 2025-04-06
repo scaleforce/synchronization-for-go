@@ -52,10 +52,10 @@ type UnmarshalMessageFunc func(serviceBusReceivedMessage *azservicebus.ReceivedM
 type GetPartitionNameFunc func(message pubsub.Message) (string, error)
 
 type SubscriberOptions struct {
-	Interval                 time.Duration
-	MessagesLimit            int
-	PartitionsCount          int
-	ConsumersRunToCompletion bool
+	Interval        time.Duration
+	MessagesLimit   int
+	PartitionsCount int
+	PartitionsDrain bool
 }
 
 type partitionMessage struct {
@@ -70,33 +70,10 @@ type Subscriber struct {
 	getPartitionNameFunc GetPartitionNameFunc
 	logger               *slog.Logger
 	options              *SubscriberOptions
-	partitions           []chan *partitionMessage
 }
 
 func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalMessageFunc UnmarshalMessageFunc, getPartitionNameFunc GetPartitionNameFunc, logger *slog.Logger, options *SubscriberOptions) *Subscriber {
-	partitionsCount := 1
-
-	if options != nil {
-		if options.PartitionsCount > 0 {
-			partitionsCount = options.PartitionsCount
-		}
-	}
-
-	partitions := make([]chan *partitionMessage, partitionsCount)
-
-	for partitionIndex := range partitions {
-		partitions[partitionIndex] = make(chan *partitionMessage, 10)
-	}
-
-	return &Subscriber{
-		receiver:             receiver,
-		dispatcher:           dispatcher,
-		unmarshalMessageFunc: unmarshalMessageFunc,
-		getPartitionNameFunc: getPartitionNameFunc,
-		logger:               logger,
-		options:              options,
-		partitions:           partitions,
-	}
+	return &Subscriber{receiver: receiver, dispatcher: dispatcher, unmarshalMessageFunc: unmarshalMessageFunc, getPartitionNameFunc: getPartitionNameFunc, logger: logger, options: options}
 }
 
 type RunError struct {
@@ -121,62 +98,71 @@ func (runErr *RunError) Error() string {
 }
 
 func (subscriber *Subscriber) Run(ctx context.Context) error {
-	consumersRunToCompletion := false
+	partitionsCount := 1
+	partitionsDrain := false
 
 	if subscriber.options != nil {
-		consumersRunToCompletion = subscriber.options.ConsumersRunToCompletion
+		if subscriber.options.PartitionsCount > 0 {
+			partitionsCount = subscriber.options.PartitionsCount
+		}
+
+		partitionsDrain = subscriber.options.PartitionsDrain
 	}
 
-	var producerErr error
+	partitions := make([]chan *partitionMessage, 0, partitionsCount)
 
-	producerGroup := sync.WaitGroup{}
+	for range partitionsCount {
+		partition := make(chan *partitionMessage, 10)
 
-	producerGroup.Add(1)
+		partitions = append(partitions, partition)
+	}
 
-	go func() {
-		defer producerGroup.Done()
+	var consumerCtx context.Context
 
-		producerErr = subscriber.produce(ctx)
-	}()
-
-	var consumeCtx context.Context
-
-	if consumersRunToCompletion {
-		consumeCtx = context.Background()
+	if partitionsDrain {
+		consumerCtx = context.Background()
 	} else {
-		consumeCtx = ctx
+		consumerCtx = ctx
 	}
 
-	consumerErrs := []error{}
+	consumerErrs := make(chan error, len(partitions))
 
-	consumersGroup := sync.WaitGroup{}
+	consumerGroup := sync.WaitGroup{}
 
-	consumersGroup.Add(len(subscriber.partitions))
+	consumerGroup.Add(len(partitions))
 
-	for _, partition := range subscriber.partitions {
+	for _, partition := range partitions {
 		go func() {
-			defer consumersGroup.Done()
+			defer consumerGroup.Done()
 
-			if err := subscriber.consume(consumeCtx, partition); err != nil {
-				consumerErrs = append(consumerErrs, err)
-			}
+			consumerErrs <- subscriber.consume(consumerCtx, partition)
 		}()
 	}
 
-	producerGroup.Wait()
+	producerErr := subscriber.produce(ctx, partitions)
 
-	if consumersRunToCompletion {
-		for _, partition := range subscriber.partitions {
+	if partitionsDrain {
+		for _, partition := range partitions {
 			close(partition)
 		}
 	}
 
-	consumersGroup.Wait()
+	consumerGroup.Wait()
 
-	if producerErr != nil || len(consumerErrs) != 0 {
+	close(consumerErrs)
+
+	errs := make([]error, 0, len(partitions))
+
+	for consumerErr := range consumerErrs {
+		if consumerErr != nil {
+			errs = append(errs, consumerErr)
+		}
+	}
+
+	if producerErr != nil || len(errs) != 0 {
 		return &RunError{
 			ProducerErr:  producerErr,
-			ConsumerErrs: consumerErrs,
+			ConsumerErrs: errs,
 		}
 	}
 
@@ -187,7 +173,11 @@ var (
 // errPartitionLimit = errors.New("partition limit")
 )
 
-func (subscriber *Subscriber) enqueue(ctx context.Context, partitionMessage *partitionMessage) error {
+func (subscriber *Subscriber) enqueue(ctx context.Context, partitions []chan *partitionMessage, partitionMessage *partitionMessage) error {
+	if len(partitions) == 0 {
+		return nil
+	}
+
 	partitionName, err := subscriber.getPartitionNameFunc(partitionMessage.message)
 
 	if err != nil {
@@ -200,12 +190,12 @@ func (subscriber *Subscriber) enqueue(ctx context.Context, partitionMessage *par
 
 	partitionHash := hash32.Sum32()
 
-	partitionIndex := int(partitionHash % uint32(len(subscriber.partitions)))
+	partitionIndex := int(partitionHash % uint32(len(partitions)))
 
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case subscriber.partitions[partitionIndex] <- partitionMessage:
+	case partitions[partitionIndex] <- partitionMessage:
 		// default:
 		// 	return errPartitionLimit
 	}
@@ -213,7 +203,7 @@ func (subscriber *Subscriber) enqueue(ctx context.Context, partitionMessage *par
 	return nil
 }
 
-func (subscriber *Subscriber) produce(ctx context.Context) error {
+func (subscriber *Subscriber) produce(ctx context.Context, partitions []chan *partitionMessage) error {
 	interval := 1 * time.Minute
 	messagesLimit := 1
 
@@ -269,7 +259,7 @@ func (subscriber *Subscriber) produce(ctx context.Context) error {
 					serviceBusReceivedMessage: serviceBusReceivedMessage,
 				}
 
-				if err := subscriber.enqueue(ctx, partitionMessage); err != nil {
+				if err := subscriber.enqueue(ctx, partitions, partitionMessage); err != nil {
 					if err := subscriber.receiver.AbandonMessage(ctx, serviceBusReceivedMessage, nil); err != nil {
 						var serviceBusErr *azservicebus.Error
 
