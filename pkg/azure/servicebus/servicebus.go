@@ -55,6 +55,7 @@ type SubscriberOptions struct {
 	Interval        time.Duration
 	MessagesLimit   int
 	PartitionsCount int
+	PartitionsLimit int
 	PartitionsDrain bool
 }
 
@@ -99,11 +100,16 @@ func (runErr *RunError) Error() string {
 
 func (subscriber *Subscriber) Run(ctx context.Context) error {
 	partitionsCount := 1
+	partitionsLimit := 1
 	partitionsDrain := false
 
 	if subscriber.options != nil {
 		if subscriber.options.PartitionsCount > 0 {
 			partitionsCount = subscriber.options.PartitionsCount
+		}
+
+		if subscriber.options.PartitionsLimit > 0 {
+			partitionsLimit = subscriber.options.PartitionsLimit
 		}
 
 		partitionsDrain = subscriber.options.PartitionsDrain
@@ -112,7 +118,7 @@ func (subscriber *Subscriber) Run(ctx context.Context) error {
 	partitions := make([]chan *partitionMessage, 0, partitionsCount)
 
 	for range partitionsCount {
-		partition := make(chan *partitionMessage, 10)
+		partition := make(chan *partitionMessage, partitionsLimit)
 
 		partitions = append(partitions, partition)
 	}

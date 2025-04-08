@@ -100,6 +100,7 @@ func main() {
 		Interval:        viper.GetDuration("AZURE_SERVICEBUS_INTERVAL"),
 		MessagesLimit:   viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
 		PartitionsCount: viper.GetInt("AZURE_SERVICEBUS_PARTITIONS_COUNT"),
+		PartitionsLimit: viper.GetInt("AZURE_SERVICEBUS_PARTITIONS_LIMIT"),
 		PartitionsDrain: viper.GetBool("AZURE_SERVICEBUS_PARTITIONS_DRAIN"),
 	}
 
