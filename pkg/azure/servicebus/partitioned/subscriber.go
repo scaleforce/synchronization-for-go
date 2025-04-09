@@ -1,4 +1,4 @@
-package servicebus
+package partitioned
 
 import (
 	"context"
@@ -11,44 +11,10 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
+	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 )
 
-type MarshalMessageFunc func(message pubsub.Message) (*azservicebus.Message, error)
-
-type PublisherOptions struct{}
-
-type Publisher struct {
-	sender             *azservicebus.Sender
-	marshalMessageFunc MarshalMessageFunc
-	logger             *slog.Logger
-	options            *PublisherOptions
-}
-
-func NewPublisher(sender *azservicebus.Sender, marshalMessageFunc MarshalMessageFunc, logger *slog.Logger, options *PublisherOptions) *Publisher {
-	return &Publisher{
-		sender:             sender,
-		marshalMessageFunc: marshalMessageFunc,
-		logger:             logger,
-		options:            options,
-	}
-}
-
-func (publisher *Publisher) Publish(ctx context.Context, message pubsub.Message) error {
-	serviceBusMessage, err := publisher.marshalMessageFunc(message)
-
-	if err != nil {
-		return err
-	}
-
-	if err := publisher.sender.SendMessage(ctx, serviceBusMessage, nil); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type UnmarshalMessageFunc func(serviceBusReceivedMessage *azservicebus.ReceivedMessage) (pubsub.Message, error)
 type GetPartitionNameFunc func(message pubsub.Message) (string, error)
 
 type SubscriberOptions struct {
@@ -67,13 +33,13 @@ type partitionMessage struct {
 type Subscriber struct {
 	receiver             *azservicebus.Receiver
 	dispatcher           *pubsub.Dispatcher
-	unmarshalMessageFunc UnmarshalMessageFunc
+	unmarshalMessageFunc servicebus.UnmarshalMessageFunc
 	getPartitionNameFunc GetPartitionNameFunc
 	logger               *slog.Logger
 	options              *SubscriberOptions
 }
 
-func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalMessageFunc UnmarshalMessageFunc, getPartitionNameFunc GetPartitionNameFunc, logger *slog.Logger, options *SubscriberOptions) *Subscriber {
+func NewSubscriber(receiver *azservicebus.Receiver, dispatcher *pubsub.Dispatcher, unmarshalMessageFunc servicebus.UnmarshalMessageFunc, getPartitionNameFunc GetPartitionNameFunc, logger *slog.Logger, options *SubscriberOptions) *Subscriber {
 	return &Subscriber{receiver: receiver, dispatcher: dispatcher, unmarshalMessageFunc: unmarshalMessageFunc, getPartitionNameFunc: getPartitionNameFunc, logger: logger, options: options}
 }
 
