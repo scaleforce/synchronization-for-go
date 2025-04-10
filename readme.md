@@ -103,14 +103,17 @@ Environment variables relevant to the publisher apps
 | AZURE_SERVICEBUS_TOPIC | | | Azure Service Bus topic. |
 
 Environment variables relevant to the subscriber apps
-| Name | Default | Optional | Description |
-|--|--|--|--|
-| AZURE_SERVICEBUS_CONNECTION_STRING | | | Azure Service Bus connection string. |
-| AZURE_SERVICEBUS_NAMESPACE | | | Azure Service Bus namespace. |
-| AZURE_SERVICEBUS_TOPIC | | | Azure Service Bus topic. |
-| AZURE_SERVICEBUS_SUBSCRIPTION | | | Azure Service Bus subscription. |
-| AZURE_SERVICEBUS_INTERVAL | 1 minute | Yes | Time interval to pull messages from the subscription. *The intervals do not overlap, even if message processing takes longer than the interval.* |
-| AZURE_SERVICEBUS_MESSAGES_LIMIT | 1 | Yes | Maximum number of messages to pull from the subscription. |
+| Name | Default | Optional | Non-partitioned | Partitioned | Description |
+|--|--|--|--|--|--|
+| AZURE_SERVICEBUS_CONNECTION_STRING | | | ✅ | ✅ | Azure Service Bus connection string. |
+| AZURE_SERVICEBUS_NAMESPACE | | | ✅ | ✅ | Azure Service Bus namespace. |
+| AZURE_SERVICEBUS_TOPIC | | | ✅ | ✅ | Azure Service Bus topic. |
+| AZURE_SERVICEBUS_SUBSCRIPTION | | | ✅ | ✅ | Azure Service Bus subscription. |
+| AZURE_SERVICEBUS_INTERVAL | 1 minute | Yes | ✅ | ✅ | Time interval to pull messages from the subscription. *The intervals do not overlap, even if message processing takes longer than the interval.* |
+| AZURE_SERVICEBUS_MESSAGES_LIMIT | 1 | Yes | ✅ | ✅ | Maximum number of messages to pull from the subscription. |
+| AZURE_SERVICEBUS_PARTITIONS_COUNT | 1 | Yes | ❌ | ✅ | Number of partitions. |
+| AZURE_SERVICEBUS_PARTITIONS_LIMIT | 1 | Yes | ❌ | ✅ | Size of the partitions. |
+| AZURE_SERVICEBUS_PARTITIONS_DRAIN | false | Yes | ❌ | ✅ | Whether the consumers drain their partitions before they stop, instead of stopping immediately with the producer. |
 
 > [!IMPORTANT]
-> AZURE_SERVICEBUS_INTERVAL and AZURE_SERVICEBUS_MESSAGES_LIMIT environment variables are the means of tuning the performance of subscriber apps.
+> AZURE_SERVICEBUS_INTERVAL, AZURE_SERVICEBUS_MESSAGES_LIMIT and AZURE_SERVICEBUS_PARTITIONS_COUNT environment variables are the means of tuning the performance of subscriber apps.

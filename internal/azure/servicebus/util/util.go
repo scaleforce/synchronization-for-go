@@ -1,7 +1,8 @@
-package message
+package util
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 	emptymessage "github.com/scaleforce/synchronization-for-go/internal/message/empty"
@@ -120,4 +121,129 @@ func NewUnmarshalReceivedEnvelopeFunc(unmarshalMessageFunc servicebus.UnmarshalM
 
 		return receivedEnvelope, nil
 	}
+}
+
+func GetPartitionName(message pubsub.Message) (string, error) {
+	var partitionName string
+
+	discriminator := message.Discriminator()
+
+	switch discriminator {
+	case masterdata.DiscriminatorCity:
+		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+		if !ok {
+			return "", envelopemessage.ErrInvalidReceivedEnvelope
+		}
+
+		cityEvent, ok := receivedEnvelope.Message.(*masterdata.CityEvent)
+
+		if !ok {
+			return "", pubsub.ErrInvalidDiscriminator
+		}
+
+		partitionName = fmt.Sprintf("%s|%s~%s", cityEvent.Type, cityEvent.TenantGroupName, cityEvent.Data.Code)
+	case masterdata.DiscriminatorCircle:
+		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+		if !ok {
+			return "", envelopemessage.ErrInvalidReceivedEnvelope
+		}
+
+		circleEvent, ok := receivedEnvelope.Message.(*masterdata.CircleEvent)
+
+		if !ok {
+			return "", pubsub.ErrInvalidDiscriminator
+		}
+
+		partitionName = fmt.Sprintf("%s|%s~%s", circleEvent.Type, circleEvent.TenantGroupName, circleEvent.Data.Code)
+	case masterdata.DiscriminatorZone:
+		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+		if !ok {
+			return "", envelopemessage.ErrInvalidReceivedEnvelope
+		}
+
+		zoneEvent, ok := receivedEnvelope.Message.(*masterdata.ZoneEvent)
+
+		if !ok {
+			return "", pubsub.ErrInvalidDiscriminator
+		}
+
+		partitionName = fmt.Sprintf("%s|%s~%s", zoneEvent.Type, zoneEvent.TenantGroupName, zoneEvent.Data.Code)
+	case partner.DiscriminatorPartnerGroup:
+		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+		if !ok {
+			return "", envelopemessage.ErrInvalidReceivedEnvelope
+		}
+
+		partnerGroupEvent, ok := receivedEnvelope.Message.(*partner.PartnerGroupEvent)
+
+		if !ok {
+			return "", pubsub.ErrInvalidDiscriminator
+		}
+
+		partitionName = fmt.Sprintf("%s|%s~%s", partnerGroupEvent.Type, partnerGroupEvent.TenantGroupName, partnerGroupEvent.Data.Code)
+	case partner.DiscriminatorPartner:
+		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+		if !ok {
+			return "", envelopemessage.ErrInvalidReceivedEnvelope
+		}
+
+		partnerEvent, ok := receivedEnvelope.Message.(*partner.PartnerEvent)
+
+		if !ok {
+			return "", pubsub.ErrInvalidDiscriminator
+		}
+
+		partitionName = fmt.Sprintf("%s|%s~%s", partnerEvent.Type, partnerEvent.TenantGroupName, partnerEvent.Data.Code)
+	case hr.DiscriminatorEmployee:
+		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+		if !ok {
+			return "", envelopemessage.ErrInvalidReceivedEnvelope
+		}
+
+		employeeEvent, ok := receivedEnvelope.Message.(*hr.EmployeeEvent)
+
+		if !ok {
+			return "", pubsub.ErrInvalidDiscriminator
+		}
+
+		partitionName = fmt.Sprintf("%s|%s~%s", employeeEvent.Type, employeeEvent.TenantGroupName, employeeEvent.Data.Code)
+	case hr.DiscriminatorPosition:
+		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+		if !ok {
+			return "", envelopemessage.ErrInvalidReceivedEnvelope
+		}
+
+		positionEvent, ok := receivedEnvelope.Message.(*hr.PositionEvent)
+
+		if !ok {
+			return "", pubsub.ErrInvalidDiscriminator
+		}
+
+		partitionName = fmt.Sprintf("%s|%s~%s", positionEvent.Type, positionEvent.TenantGroupName, positionEvent.Data.Code)
+	case hr.DiscriminatorRole:
+		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
+
+		if !ok {
+			return "", envelopemessage.ErrInvalidReceivedEnvelope
+		}
+
+		roleEvent, ok := receivedEnvelope.Message.(*hr.RoleEvent)
+
+		if !ok {
+			return "", pubsub.ErrInvalidDiscriminator
+		}
+
+		partitionName = fmt.Sprintf("%s|%s~%s", roleEvent.Type, roleEvent.TenantGroupName, roleEvent.Data.Code)
+	default:
+		partitionName = ""
+	}
+
+	return partitionName, nil
 }
