@@ -116,4 +116,4 @@ Environment variables relevant to the subscriber apps
 | AZURE_SERVICEBUS_PARTITIONS_DRAIN | false | Yes | ❌ | ✅ | Whether the consumers drain their partitions before they stop, instead of stopping immediately with the producer. |
 
 > [!IMPORTANT]
-> AZURE_SERVICEBUS_INTERVAL, AZURE_SERVICEBUS_MESSAGES_LIMIT and AZURE_SERVICEBUS_PARTITIONS_COUNT environment variables are the means of tuning the performance of subscriber apps.
+> AZURE_SERVICEBUS_INTERVAL, AZURE_SERVICEBUS_MESSAGES_LIMIT, AZURE_SERVICEBUS_PARTITIONS_COUNT and AZURE_SERVICEBUS_PARTITIONS_LIMIT environment variables are the means of tuning the performance of subscriber apps.
