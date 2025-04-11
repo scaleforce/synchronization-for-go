@@ -10,7 +10,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
-	"github.com/scaleforce/synchronization-for-go/internal/azure/servicebus/message"
+	"github.com/scaleforce/synchronization-for-go/internal/azure/servicebus/util"
 	envelopemessage "github.com/scaleforce/synchronization-for-go/internal/message/envelope"
 	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
 	"github.com/scaleforce/synchronization-for-go/pkg/message/event"
@@ -83,15 +83,13 @@ func main() {
 
 	defer sender.Close(ctx)
 
-	publisher := servicebus.NewPublisher(sender, message.NewMarshalEnvelopeFunc(message.NewMarshalMessageFunc()), logger, nil)
-
-	tick := time.Tick(10 * time.Second)
+	publisher := servicebus.NewPublisher(sender, util.NewMarshalEnvelopeFunc(util.NewMarshalMessageFunc()), logger, nil)
 
 	for done := false; !done; {
 		select {
 		case <-ctx.Done():
 			done = true
-		case <-tick:
+		case <-time.Tick(10 * time.Second):
 			message := xnms.NewDeviceEvent(event.Version1, event.OperationAddOrSet, time.Now().UTC().Format(time.RFC3339), TenantGroupNameExcitel,
 				&xnms.DeviceData{
 					Code:         "1234",

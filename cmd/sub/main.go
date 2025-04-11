@@ -10,11 +10,13 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
-	"github.com/scaleforce/synchronization-for-go/internal/azure/servicebus/message"
+	"github.com/scaleforce/synchronization-for-go/internal/azure/servicebus/util"
 	"github.com/scaleforce/synchronization-for-go/internal/handler/event/hr"
 	"github.com/scaleforce/synchronization-for-go/internal/handler/event/masterdata"
 	"github.com/scaleforce/synchronization-for-go/internal/handler/event/partner"
-	"github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
+
+	// "github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus"
+	partitionedservicebus "github.com/scaleforce/synchronization-for-go/pkg/azure/servicebus/partitioned"
 	"github.com/scaleforce/synchronization-for-go/pkg/pubsub"
 	"github.com/spf13/viper"
 )
@@ -27,14 +29,6 @@ var (
 
 	dispatcher *pubsub.Dispatcher
 )
-
-type partialMessage struct {
-	Type string `json:"Type"`
-}
-
-func (message *partialMessage) Discriminator() pubsub.Discriminator {
-	return pubsub.Discriminator(message.Type)
-}
 
 func init() {
 	logger = slog.Default()
@@ -104,12 +98,15 @@ func main() {
 
 	defer receiver.Close(ctx)
 
-	subscriberOptions := &servicebus.SubscriberOptions{
-		Interval:      viper.GetDuration("AZURE_SERVICEBUS_INTERVAL"),
-		MessagesLimit: viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
+	subscriberOptions := &partitionedservicebus.SubscriberOptions{
+		Interval:        viper.GetDuration("AZURE_SERVICEBUS_INTERVAL"),
+		MessagesLimit:   viper.GetInt("AZURE_SERVICEBUS_MESSAGES_LIMIT"),
+		PartitionsCount: viper.GetInt("AZURE_SERVICEBUS_PARTITIONS_COUNT"),
+		PartitionsLimit: viper.GetInt("AZURE_SERVICEBUS_PARTITIONS_LIMIT"),
+		PartitionsDrain: viper.GetBool("AZURE_SERVICEBUS_PARTITIONS_DRAIN"),
 	}
 
-	subscriber := servicebus.NewSubscriber(receiver, dispatcher, message.NewUnmarshalReceivedEnvelopeFunc(message.NewUnmarshalMessageFunc(message.CreateMessage)), logger, subscriberOptions)
+	subscriber := partitionedservicebus.NewSubscriber(receiver, dispatcher, util.NewUnmarshalReceivedEnvelopeFunc(util.NewUnmarshalMessageFunc(util.CreateMessage)), util.GetPartitionName, logger, subscriberOptions)
 
 	if err := subscriber.Run(ctx); err != nil {
 		log.Panic(err)
