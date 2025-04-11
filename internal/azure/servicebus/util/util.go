@@ -142,7 +142,7 @@ func GetPartitionName(message pubsub.Message) (string, error) {
 			return "", pubsub.ErrInvalidDiscriminator
 		}
 
-		partitionName = fmt.Sprintf("%s|%s~%s", cityEvent.Type, cityEvent.TenantGroupName, cityEvent.Data.Code)
+		partitionName = fmt.Sprintf("%s~%s~%s", cityEvent.TenantGroupName, cityEvent.Type, cityEvent.Data.Code)
 	case masterdata.DiscriminatorCircle:
 		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
@@ -156,7 +156,7 @@ func GetPartitionName(message pubsub.Message) (string, error) {
 			return "", pubsub.ErrInvalidDiscriminator
 		}
 
-		partitionName = fmt.Sprintf("%s|%s~%s", circleEvent.Type, circleEvent.TenantGroupName, circleEvent.Data.Code)
+		partitionName = fmt.Sprintf("%s~%s~%s", circleEvent.TenantGroupName, circleEvent.Type, circleEvent.Data.Code)
 	case masterdata.DiscriminatorZone:
 		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
@@ -170,7 +170,7 @@ func GetPartitionName(message pubsub.Message) (string, error) {
 			return "", pubsub.ErrInvalidDiscriminator
 		}
 
-		partitionName = fmt.Sprintf("%s|%s~%s", zoneEvent.Type, zoneEvent.TenantGroupName, zoneEvent.Data.Code)
+		partitionName = fmt.Sprintf("%s~%s~%s", zoneEvent.TenantGroupName, zoneEvent.Type, zoneEvent.Data.Code)
 	case partner.DiscriminatorPartnerGroup:
 		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
@@ -184,7 +184,7 @@ func GetPartitionName(message pubsub.Message) (string, error) {
 			return "", pubsub.ErrInvalidDiscriminator
 		}
 
-		partitionName = fmt.Sprintf("%s|%s~%s", partnerGroupEvent.Type, partnerGroupEvent.TenantGroupName, partnerGroupEvent.Data.Code)
+		partitionName = fmt.Sprintf("%s~%s~%s", partnerGroupEvent.TenantGroupName, partnerGroupEvent.Type, partnerGroupEvent.Data.Code)
 	case partner.DiscriminatorPartner:
 		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
@@ -198,7 +198,7 @@ func GetPartitionName(message pubsub.Message) (string, error) {
 			return "", pubsub.ErrInvalidDiscriminator
 		}
 
-		partitionName = fmt.Sprintf("%s|%s~%s", partnerEvent.Type, partnerEvent.TenantGroupName, partnerEvent.Data.Code)
+		partitionName = fmt.Sprintf("%s~%s~%s", partnerEvent.TenantGroupName, partnerEvent.Type, partnerEvent.Data.Code)
 	case hr.DiscriminatorEmployee:
 		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
@@ -212,7 +212,7 @@ func GetPartitionName(message pubsub.Message) (string, error) {
 			return "", pubsub.ErrInvalidDiscriminator
 		}
 
-		partitionName = fmt.Sprintf("%s|%s~%s", employeeEvent.Type, employeeEvent.TenantGroupName, employeeEvent.Data.Code)
+		partitionName = fmt.Sprintf("%s~%s~%s", employeeEvent.TenantGroupName, employeeEvent.Type, employeeEvent.Data.Code)
 	case hr.DiscriminatorPosition:
 		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
@@ -226,7 +226,7 @@ func GetPartitionName(message pubsub.Message) (string, error) {
 			return "", pubsub.ErrInvalidDiscriminator
 		}
 
-		partitionName = fmt.Sprintf("%s|%s~%s", positionEvent.Type, positionEvent.TenantGroupName, positionEvent.Data.Code)
+		partitionName = fmt.Sprintf("%s~%s~%s", positionEvent.TenantGroupName, positionEvent.Type, positionEvent.Data.Code)
 	case hr.DiscriminatorRole:
 		receivedEnvelope, ok := message.(*envelopemessage.ReceivedEnvelope)
 
@@ -240,7 +240,7 @@ func GetPartitionName(message pubsub.Message) (string, error) {
 			return "", pubsub.ErrInvalidDiscriminator
 		}
 
-		partitionName = fmt.Sprintf("%s|%s~%s", roleEvent.Type, roleEvent.TenantGroupName, roleEvent.Data.Code)
+		partitionName = fmt.Sprintf("%s~%s~%s", roleEvent.TenantGroupName, roleEvent.Type, roleEvent.Data.Code)
 	default:
 		partitionName = ""
 	}
